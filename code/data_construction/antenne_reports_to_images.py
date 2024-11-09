@@ -26,11 +26,11 @@ tables_dict = {
 
 for year in range(2003, 2024):
     # Path to the PDF file
-    pdf_path = f'./data/source/antenne_reports/antenne_amsterdam_{year}.pdf'
+    pdf_path = f'./data/source/antenne_reports/antenne-amsterdam-{year}.pdf'
     # Specify the pages to convert 
     pages_to_convert = tables_dict[str(year)]
     # Convert the specified pages to images
-    images = convert_from_path(pdf_path, first_page=min( pages_to_convert), last_page=max(pages_to_convert))
+    images = convert_from_path(pdf_path, first_page=min(pages_to_convert), last_page=max(pages_to_convert))
     # Save or process the selected pages
     selected_images = []
     for i, page_num in enumerate(pages_to_convert):
