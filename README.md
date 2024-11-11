@@ -1,6 +1,6 @@
 ### Antenne reports
 
-Webscrap the pdfs (?)
+Webscrap the pdfs
 
 Transformer for the data
 
