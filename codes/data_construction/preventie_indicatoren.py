@@ -54,75 +54,14 @@ preventie_indicatoren['dose_max'] = pd.to_numeric(preventie_indicatoren['dose_ma
 preventie_indicatoren['dose_mean'] = pd.to_numeric(preventie_indicatoren['dose_mean'], errors='coerce')
 preventie_indicatoren['dose_sd'] = pd.to_numeric(preventie_indicatoren['dose_sd'], errors='coerce')
 preventie_indicatoren['price_per_pill'] = pd.to_numeric(preventie_indicatoren['price_per_pill'], errors='coerce')
-preventie_indicatoren
-
-plt.figure(figsize=(10, 5))
-plt.plot(preventie_indicatoren['year'], preventie_indicatoren['n_reports']) #, label='Minimum mgs')
-#plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('Reports')
-plt.title('Number of reports')
-plt.xticks(np.arange(1994,2024, 1))
-#plt.legend()
-plt.show()
-
-# Plot dose_min and dose_max over the years
-plt.figure(figsize=(10, 5))
-plt.plot(preventie_indicatoren['year'], preventie_indicatoren['dose_min'], label='Minimum mgs')
-plt.plot(preventie_indicatoren['year'], preventie_indicatoren['dose_mean'], label='Mean mgs')
-plt.plot(preventie_indicatoren['year'], preventie_indicatoren['dose_max'], label='Maximum mgs')
-#plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('Mgs')
-plt.title('XTC pills containing exclusively or mainly MDMA -- Dosage in milligrams')
-plt.legend()
-plt.show()
-
-plt.figure(figsize=(10, 5))
-plt.plot(preventie_indicatoren['year'], preventie_indicatoren['dose_sd'], label='Dose sd')
-plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('Dose')
-#plt.title('Dose Min and Max Over the Years')
-plt.legend()
-plt.show()
-
 preventie_indicatoren['adj_volatility'] = preventie_indicatoren['dose_sd'] * np.sqrt(preventie_indicatoren['n_reports'])
-plt.figure(figsize=(10, 5))
-plt.plot(preventie_indicatoren['year'], preventie_indicatoren['adj_volatility'], label=r'$\sigma_{mg} * \sqrt{N}$')
-#plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('Volatility')
-plt.title('XTC pills containing exclusively or mainly MDMA -- Dosage volatility in milligrams')
-plt.legend(loc='upper left')
-plt.show()
-
-# Plot price_per_pill over the years
-plt.figure(figsize=(10, 5))
-plt.plot(preventie_indicatoren['year'], preventie_indicatoren['price_per_pill'], label='Price Per Pill', color='green')
-#plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('Price Per Pill (€)')
-plt.title('Price Per XTC Pill in Euros')
-plt.legend()
-plt.show()
-
 preventie_indicatoren['price_per_mg'] = preventie_indicatoren['price_per_pill'] / preventie_indicatoren['dose_mean']
-plt.figure(figsize=(10, 5))
-plt.plot(preventie_indicatoren['year'], preventie_indicatoren['price_per_mg'], label='Price Per Pill', color='green')
-plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('Price per milligram (€)')
-plt.title('Price Per XTC Milligram in Euros')
-plt.legend()
-plt.show()
+preventie_indicatoren.to_csv(r'./data/processed/preventie_indicatoren_mdma.csv', index=False)
 
 
 testservice = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/225_0.csv')
-
 rows_to_drop = [0, 4, 16, 28] 
 testservice = testservice.drop(index=rows_to_drop).reset_index(drop=True)
-
 # Change the value of a specific cell using .iloc
 # For example, change the value in the cell at row 2, column index 3 to 'new_value'
 testservice.iloc[10, 2] = 35
@@ -153,84 +92,29 @@ threshold = 10
 testservice['mdma'] = testservice['mdma'].apply(lambda x: x * 1000 if x < threshold else x)
 testservice['total'] = testservice['total'].apply(lambda x: x * 1000 if x < threshold else x)
 testservice = testservice.fillna(0).astype(int)
+testservice.to_csv(r'./data/processed/225_0.csv', index=False)
 
-plt.figure(figsize=(10, 5))
-plt.plot(testservice['year'], testservice['mdma'], label='mdma')
-plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('mdma')
-#plt.title('Dose Min and Max Over the Years')
-plt.legend()
-plt.show()
-
-test_2000 = testservice[testservice['year'] > 1999]
-plt.figure(figsize=(10, 5))
-plt.plot(test_2000['year'], test_2000['mdma'], label='mdma')
-plt.plot(test_2000['year'], test_2000['cocaine'], label='cocaine')
-plt.plot(test_2000['year'], test_2000['amphetamine'], label='amphetamine')
-plt.plot(test_2000['year'], test_2000['ketamine'], label='ketamine')
-plt.plot(test_2000['year'], test_2000['2cb'], label='2cb')
-plt.plot(test_2000['year'], test_2000['3mmc4mmc'], label='3mmc4mmc')
-plt.plot(test_2000['year'], test_2000['4fa'], label='4fa')
-plt.plot(test_2000['year'], test_2000['lsd'], label='lsd')
-plt.plot(test_2000['year'], test_2000['ghb'], label='ghb')
-plt.plot(test_2000['year'], test_2000['other'], label='other')
-plt.plot(test_2000['year'], test_2000['unknown'], label='unknown')
-plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('mdma')
-#plt.title('Dose Min and Max Over the Years')
-plt.legend()
-plt.show()
-
-plt.figure(figsize=(10, 5))
-plt.plot(test_2000['year'], np.log(test_2000['mdma']), label='mdma')
-plt.plot(test_2000['year'], np.log(test_2000['cocaine']), label='cocaine')
-plt.plot(test_2000['year'], np.log(test_2000['amphetamine']), label='amphetamine')
-plt.plot(test_2000['year'], np.log(test_2000['ketamine']), label='ketamine')
-plt.plot(test_2000['year'], np.log(test_2000['2cb']), label='2cb')
-plt.plot(test_2000['year'], np.log(test_2000['3mmc4mmc']), label='3mmc4mmc')
-plt.plot(test_2000['year'], np.log(test_2000['4fa']), label='4fa')
-plt.plot(test_2000['year'], np.log(test_2000['lsd']), label='lsd')
-plt.plot(test_2000['year'], np.log(test_2000['ghb']), label='ghb')
-plt.plot(test_2000['year'], np.log(test_2000['other']), label='other')
-plt.plot(test_2000['year'], np.log(test_2000['unknown']), label='unknown')
-plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('mdma')
-#plt.title('Dose Min and Max Over the Years')
-plt.legend()
-plt.show()
-
-test_base = testservice[testservice['year'] > 1999]
-test_base.iloc[:, 1:] = test_base.iloc[:, 1:].astype(float)
-test_base.iloc[:, 1:] = test_base.iloc[:, 1:].div(test_base.iloc[0, 1:]) * 100
-
-plt.figure(figsize=(10, 5))
-plt.plot(test_base['year'], test_base['mdma'], label='mdma')
-plt.plot(test_base['year'], test_base['cocaine'], label='cocaine')
-plt.plot(test_base['year'], test_base['amphetamine'], label='amphetamine')
-plt.plot(test_base['year'], test_base['ketamine'], label='ketamine')
-plt.plot(test_base['year'], test_base['2cb'], label='2cb')
-plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('mdma')
-#plt.title('Dose Min and Max Over the Years')
-plt.legend()
-plt.show()
-
-plt.figure(figsize=(10, 5))
-plt.plot(test_base['year'], np.log(test_base['mdma']), label='mdma')
-plt.plot(test_base['year'], np.log(test_base['cocaine']), label='cocaine')
-plt.plot(test_base['year'], np.log(test_base['amphetamine']), label='amphetamine')
-plt.plot(test_base['year'], np.log(test_base['ketamine']), label='ketamine')
-plt.plot(test_base['year'], np.log(test_base['2cb']), label='2cb')
-plt.axvline(x=2013, color='red', linestyle='--', label='Year 2013 (t = -1)')
-plt.xlabel('Year')
-plt.ylabel('mdma')
-#plt.title('Dose Min and Max Over the Years')
-plt.legend()
-plt.show()
+xtc_profile_2003 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2003/245_0.csv')
+xtc_profile_2004 = "not available"
+xtc_profile_2005 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2005/231_0.csv')
+xtc_profile_2006 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2006/205_1.csv')
+xtc_profile_2007 = "not available (2019)"
+xtc_profile_2008 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2008/200_0.csv')
+xtc_profile_2009 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2009/189_0.csv')
+xtc_profile_2010 = "available, couldn't read it"
+xtc_profile_2011 = "not available -> pooled stimulants"
+xtc_profile_2012 = "not available -> pooled stimulants"
+xtc_profile_2013 = "available, couldn't read it (204), pooled consumption"
+xtc_profile_2014 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2014/198_0.csv')
+xtc_profile_2015 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2015/209_0.csv')
+xtc_profile_2016 = "available, couldn't read it (228)"
+xtc_profile_2017 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2017/249_1.csv')
+xtc_profile_2018 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2018/229_1.csv')
+xtc_profile_2019 = "available, couldn't read it (230)"
+xtc_profile_2020 = "not available -> corona studies"
+xtc_profile_2021 = "not available"
+xtc_profile_2022 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2022/245_0.csv')
+xtc_profile_2023 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/214_0.csv')
 
 '''
 2013 report
