@@ -1,6 +1,6 @@
 import json
 from transformers import AutoImageProcessor, TableTransformerForObjectDetection
-from code.data_construction.antenne_reports_utils import download_reports, report_tables_to_png, obtain_the_tensors, report_tables_to_csv
+from codes.data_construction.antenne_reports_utils import download_reports, report_tables_to_png, obtain_the_tensors, report_tables_to_csv
 
 def main():
     # Load the reports url
