@@ -136,7 +136,7 @@ matches_df[(matches_df['date'].dt.year == 2014) & (matches_df['date'].dt.month =
 matches_df[(matches_df['date'].dt.year == 2015) & (matches_df['date'].dt.month == 1)]
 
 
-matches_df.to_csv(r'./data/processed/telegraaf_matches.csv', index=False)
+matches_df.to_csv(r'./data/processed/red_alert_news/telegraaf_matches.csv', index=False)
 
 # Aggregate the observations at the year level for each keyword
 matches_df['year'] = matches_df['date'].dt.year
@@ -145,7 +145,7 @@ yearly_aggregated_df = matches_df.groupby(['year', 'keyword']).agg({
     'n_links': 'sum'
 }).reset_index()
 
-yearly_aggregated_df.to_csv(r'./data/processed/telegraaf_yearly_aggregated.csv', index=False)
+yearly_aggregated_df.to_csv(r'./data/processed/red_alert_news/telegraaf_yearly_aggregated.csv', index=False)
 
 
 # if results is None:

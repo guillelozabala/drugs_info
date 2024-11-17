@@ -29,11 +29,10 @@ preventie_indicatoren_dict = {
 # CHECK HISTORIC RECORDS
 
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 
 # Load the CSV file
-preventie_indicatoren = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/mdma_1.csv')
+preventie_indicatoren = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/227_0_GPT.csv')
 preventie_indicatoren
 
 preventie_indicatoren[['dose_min', 'dose_max']] = preventie_indicatoren['dosering (min-max)'].str.split('-', expand=True)
@@ -56,8 +55,7 @@ preventie_indicatoren['dose_sd'] = pd.to_numeric(preventie_indicatoren['dose_sd'
 preventie_indicatoren['price_per_pill'] = pd.to_numeric(preventie_indicatoren['price_per_pill'], errors='coerce')
 preventie_indicatoren['adj_volatility'] = preventie_indicatoren['dose_sd'] * np.sqrt(preventie_indicatoren['n_reports'])
 preventie_indicatoren['price_per_mg'] = preventie_indicatoren['price_per_pill'] / preventie_indicatoren['dose_mean']
-preventie_indicatoren.to_csv(r'./data/processed/preventie_indicatoren_mdma.csv', index=False)
-
+preventie_indicatoren.to_csv(r'./data/processed/antenne_reports/testservice/227_0.csv', index=False)
 
 testservice = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/225_0.csv')
 rows_to_drop = [0, 4, 16, 28] 
@@ -92,7 +90,7 @@ threshold = 10
 testservice['mdma'] = testservice['mdma'].apply(lambda x: x * 1000 if x < threshold else x)
 testservice['total'] = testservice['total'].apply(lambda x: x * 1000 if x < threshold else x)
 testservice = testservice.fillna(0).astype(int)
-testservice.to_csv(r'./data/processed/225_0.csv', index=False)
+testservice.to_csv(r'./data/testservice/225_0.csv', index=False)
 
 xtc_profile_2003 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2003/245_0.csv')
 xtc_profile_2004 = "not available"

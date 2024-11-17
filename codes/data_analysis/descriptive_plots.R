@@ -16,7 +16,7 @@ directory_path <- dirname(rstudioapi::getActiveDocumentContext()$path)
 directory_path <- sub("codes/data_analysis", "", directory_path)
 
 # Define the path to the data
-preventie_data_path <- "data/processed/preventie_indicatoren_mdma.csv"
+preventie_data_path <- "data/processed/antenne_reports/testservice/227_0.csv"
 csv_preventie_path <- file.path(
     paste(directory_path, preventie_data_path, sep = "/")
 )
@@ -286,7 +286,7 @@ ggsave(
 ###
 # Do the same for the Telegraaf data (CLEAN THIS MESS)
 ###
-telegraaf_data_path <- "data/processed/telegraaf_yearly_aggregated.csv"
+telegraaf_data_path <- "data/processed/red_alerts_news/telegraaf_yearly_aggregated.csv"
 telegraaf_data_csv  <- file.path(
     paste(directory_path, telegraaf_data_path, sep = "/")
 )
