@@ -1,75 +1,27 @@
-
-'''
-preventie_indicatoren_dict = {
-    '2003': list(range(289, 294)),
-    '2004': list(range(189, 194)),
-    '2005': list(range(256, 262)),
-    '2006': list(range(216, 222)),
-    '2007': list(range(297, 303)),
-    '2008': list(range(226, 233)), 
-    '2009': list(range(206, 213)),
-    '2010': list(range(255, 263)),
-    '2011': list(range(305, 312)),
-    '2012': list(range(189, 195)),
-    '2013': list(range(215, 219)),
-    '2014': list(range(225, 227)),
-    '2015': list(range(239, 242)),
-    '2016': list(range(259, 261)),
-    '2017': list(range(293, 297)),
-    '2018': list(range(258, 271)),
-    '2019': list(range(236, 246)),
-    '2020': list(range(279, 285)),
-    '2021': list(range(246, 252)),
-    '2022': list(range(266, 277)),
-    '2023': list(range(225, 236))
-}
-
-'''
-
-# CHECK HISTORIC RECORDS
-
 import pandas as pd
-import numpy as np
 
-# Load the CSV file
-preventie_indicatoren = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/227_0_GPT.csv')
-preventie_indicatoren
+from codes.data_construction.antenne_reports_clearing_utils import *
 
-preventie_indicatoren[['dose_min', 'dose_max']] = preventie_indicatoren['dosering (min-max)'].str.split('-', expand=True)
-preventie_indicatoren[['dose_mean', 'dose_sd']] = preventie_indicatoren['dosering (gemiddeld (sd))'].str.split(' ', expand=True)
-preventie_indicatoren['dose_sd'] = preventie_indicatoren['dose_sd'].str.replace(r'[\(\)]', '', regex=True)
-preventie_indicatoren['prijs per pil (gemiddeld)'] = preventie_indicatoren['prijs per pil (gemiddeld)'].str.replace(r'[€]', '', regex=True)
-# Drop redundant columns
-preventie_indicatoren.drop(columns=['dosering (min-max)', 'dosering (gemiddeld (sd))'], inplace=True)
-# Rename the columns (N_pricing missing)
-preventie_indicatoren.rename(columns={
-    'jaar': 'year',
-    'aantal': 'n_reports',
-    'prijs per pil (gemiddeld)': 'price_per_pill'
-    }, inplace=True)
-    # Convert columns to numeric
-preventie_indicatoren['dose_min'] = pd.to_numeric(preventie_indicatoren['dose_min'], errors='coerce')
-preventie_indicatoren['dose_max'] = pd.to_numeric(preventie_indicatoren['dose_max'], errors='coerce')
-preventie_indicatoren['dose_mean'] = pd.to_numeric(preventie_indicatoren['dose_mean'], errors='coerce')
-preventie_indicatoren['dose_sd'] = pd.to_numeric(preventie_indicatoren['dose_sd'], errors='coerce')
-preventie_indicatoren['price_per_pill'] = pd.to_numeric(preventie_indicatoren['price_per_pill'], errors='coerce')
-preventie_indicatoren['adj_volatility'] = preventie_indicatoren['dose_sd'] * np.sqrt(preventie_indicatoren['n_reports'])
-preventie_indicatoren['price_per_mg'] = preventie_indicatoren['price_per_pill'] / preventie_indicatoren['dose_mean']
-preventie_indicatoren.to_csv(r'./data/processed/antenne_reports/testservice/227_0.csv', index=False)
+path_2023 = r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/'
 
-testservice = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/225_0.csv')
-rows_to_drop = [0, 4, 16, 28] 
-testservice = testservice.drop(index=rows_to_drop).reset_index(drop=True)
-# Change the value of a specific cell using .iloc
-# For example, change the value in the cell at row 2, column index 3 to 'new_value'
-testservice.iloc[10, 2] = 35
-testservice.iloc[6, 3] = 6
-testservice.iloc[10, 3] = 39
-testservice.iloc[17, 3] = 66
-testservice.iloc[21, 3] = 138
-testservice.iloc[28, 3] = 291
+# TOTAL SAMPLES DATA
 
-testservice.rename(columns={
+# Rows with missing data
+faulty_rows = [0, 4, 16, 28] 
+
+# Coordinates of faulty cells and their correct values
+changes = [
+    (10, 2, 35),
+    (6, 3, 6),
+    (10, 3, 39),
+    (17, 3, 66),
+    (21, 3, 138),
+    (28, 3, 291)
+]
+
+units = ['mdma', 'total']
+
+COLUMN_MAP_TOTAL_SAMPLES = {
     'Unnamed: 0': 'year',
     'Unnamed: 1': 'mdma',
     'Unnamed: 2': 'cocaine',
@@ -83,45 +35,92 @@ testservice.rename(columns={
     'Unnamed: 9': 'other',
     'Unnamed: 10': 'unknown',
     'Unnamed: 11': 'total'
-    }, inplace=True)
+    }
 
-# Define the threshold
-threshold = 10
-testservice['mdma'] = testservice['mdma'].apply(lambda x: x * 1000 if x < threshold else x)
-testservice['total'] = testservice['total'].apply(lambda x: x * 1000 if x < threshold else x)
-testservice = testservice.fillna(0).astype(int)
-testservice.to_csv(r'./data/testservice/225_0.csv', index=False)
+clean_total_reports_data('225_0.csv',path_2023,COLUMN_MAP_TOTAL_SAMPLES,faulty_rows,changes,units)
 
-xtc_profile_2003 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2003/245_0.csv')
-xtc_profile_2004 = "not available"
-xtc_profile_2005 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2005/231_0.csv')
-xtc_profile_2006 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2006/205_1.csv')
-xtc_profile_2007 = "not available (2019)"
-xtc_profile_2008 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2008/200_0.csv')
-xtc_profile_2009 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2009/189_0.csv')
-xtc_profile_2010 = "available, couldn't read it"
-xtc_profile_2011 = "not available -> pooled stimulants"
-xtc_profile_2012 = "not available -> pooled stimulants"
-xtc_profile_2013 = "available, couldn't read it (204), pooled consumption"
-xtc_profile_2014 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2014/198_0.csv')
-xtc_profile_2015 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2015/209_0.csv')
-xtc_profile_2016 = "available, couldn't read it (228)"
-xtc_profile_2017 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2017/249_1.csv')
-xtc_profile_2018 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2018/229_1.csv')
-xtc_profile_2019 = "available, couldn't read it (230)"
-xtc_profile_2020 = "not available -> corona studies"
-xtc_profile_2021 = "not available"
-xtc_profile_2022 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2022/245_0.csv')
-xtc_profile_2023 = pd.read_csv(r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/214_0.csv')
 
-'''
-2013 report
-Prompted by a number of fatal accidents caused by white heroin sold as cocaine, the 
-Amsterdam authorities launched a coke alert campaign in 2014 (it was discontinued in 
-2015). The campaign had considerable impact in the nightlife scene. Mobile drug 
-suppliers faced more questioning from clients about the purity of their products, and 
-the drug checking service received significantly more cocaine submissions. None of 
-this appeared to influence the scale of cocaine use, however. Prices remained stable 
-at around 50 euros per gram. The purity of the submitted samples also remained 
-stable, although levamisole adulteration has increased.
-'''
+# DOSES DATA
+
+# Constants
+COLUMN_MAP_DOSES = {
+    'year': 'Unnamed: 0',
+    'n_samples': 'Unnamed: 1',
+    'n_prices_default': 'Unnamed: 3',
+    'prices_default': 'Unnamed: 4',
+    'dosering': 'dosering',
+}
+
+# Substance-specific settings
+SUBSTANCE_SETTINGS_DOSES = {
+    'mdma': {
+        'adjustments': [
+            {'column': COLUMN_MAP_DOSES['year'], 'function': lambda x: x + 2000 if x < 50 else x + 1000},
+            {'column': COLUMN_MAP_DOSES['n_samples'], 'function': lambda x: x * 1000 if x < 10 else x},
+            {'column': COLUMN_MAP_DOSES['n_prices_default'], 'function': lambda x: x * 1000 if x < 10 else x},
+        ]
+    },
+    'cocaine': {
+        'adjustments': [{'column': COLUMN_MAP_DOSES['year'], 'function': lambda x: x + 2000}]
+    },
+    'twocb': {
+        'adjustments': [
+            {'column': 'Unnamed: 5', 'function': lambda x, i: x + ['2', '3', '2', '4', '4', '2', '3', '3', '6', '7', '0', '7'][i], 'index': True},
+        ],
+        'drop_columns': ['Unnamed: 3'],
+        'price_column': 'Unnamed: 5',
+        'n_price_column': 'Unnamed: 4',
+    },
+    'ghb': {
+        'split_columns': {'Unnamed: 2': ['dose_min', 'dose_max'], 'doserin': ['dose_mean', 'dose_sd']},
+        'drop_columns': ['Unnamed: 2', 'doserin'],
+        'price_column': None,
+    },
+    'lsd': {
+        'adjustments': [{'column': COLUMN_MAP_DOSES['year'], 'function': lambda x: x + 2000}],
+        'price_column': 'prijs',
+    },
+}
+
+substances_doses = [
+    ('mdma', '227_2.csv'),
+    ('cocaine', '229_2.csv'),
+    ('amphetamine', '230_2.csv'),
+    ('ketamine', '231_1.csv'),
+    ('twocb', '232_2.csv'),
+    ('lsd', '233_2.csv'),
+    ('ghb', '234_2.csv')
+]
+
+# Process each substance
+for substance, file_name in substances_doses:
+    clean_dosering_data(substance, file_name, path_2023, SUBSTANCE_SETTINGS_DOSES, COLUMN_MAP_DOSES)
+
+# PURITY DATA
+
+substances_purity = [
+    ('mdma', '227_0.csv'), # missing last row
+    ('cocaine', '228_0.csv'),
+    ('amphetamine', '229_1.csv'),
+    ('ketamine', '230_1.csv'), #year
+    ('twocb', '231_0.csv'),
+    ('lsd', '232_1.csv'), # year
+    ('ghb', '233_1.csv')
+]
+
+COLUMN_MAP_PURITY = {
+    'Unnamed: 0':'year',
+    'geen':'no_analysis',
+}
+
+TRANSLATIONS = {
+    'uitsluitend': 'exclusively',
+    'voornamelijk': 'primarily',
+    'ander': 'other',
+    'overige': 'remaining'
+}
+
+# Process each substance
+for substance, file_name in substances_purity:
+    clean_purity_data(substance, file_name, path_2023, COLUMN_MAP_PURITY, TRANSLATIONS)
+

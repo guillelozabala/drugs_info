@@ -1,4 +1,5 @@
 .vscode/
+.lintr
 data/source/antenne_reports/*.pdf
 data/intermediate/antenne_reports_to_images/**/*.png
 data/intermediate/antenne_reports_table_tensors/**/*.pt
