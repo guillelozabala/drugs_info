@@ -1,137 +1,49 @@
 library(tidyverse)
-library(lintr)
+library(jsonlite)
 library(gridExtra)
 library(grid)
+library(lintr)
 
-# Source the external R script containing the function
-source(
-    file.path(
-        directory_path,
-        "codes/data_analysis/descriptive_statistics_utils.R"
-    )
-)
-
-# Obtain the path of the directory 
-directory_path <- dirname(rstudioapi::getActiveDocumentContext()$path)
-directory_path <- sub("codes/data_analysis", "", directory_path)
+# Obtain the path of the directory
+current_path <- dirname(rstudioapi::getActiveDocumentContext()$path)
+directory_path <- sub("codes/data_analysis", "", current_path)
 
 # Define the path to the data
-preventie_data_path <- "data/processed/antenne_reports/testservice/227_0.csv"
+antenne_reports_path <- "data/processed/antenne_reports/"
+
+# Define the path to aux functions
+plot_utils_path <- "codes/data_analysis/descriptive_plots_utils.R"
+
+# Load utils
+source(file.path(directory_path, plot_utils_path))
+
+# Define the path to the data
+preventie_data_path <- "testservice/total_samples_2023.csv"
 csv_preventie_path <- file.path(
     paste(directory_path, preventie_data_path, sep = "/")
 )
 
-test_data_path <- "data/processed/225_0.csv"
-csv_test_path <- file.path(paste(directory_path, test_data_path, sep = "/"))
-
-# Read the CSVs files
-preventie_data <- read.csv(csv_path)
-test_data <- read.csv(csv_test_path)
-
-
-## XTC pills containing exclusively or mainly MDMA -- Dosage in milligrams
-data_labels <- preventie_data |>
-    dplyr::rename(
-        "Minimum dosis" = "dose_min",
-        "Maximum dosis" = "dose_max",
-        "Mean dosis" = "dose_mean"
-    )
-
-mdma_miligrams <- plot_series(
-    data_labels,
-    "year",
-    c("Minimum dosis", "Maximum dosis", "Mean dosis"),
-    colors = c("darkorchid", "deeppink", "deepskyblue2"),
-    title = " ",
-    y_label = "Milligrams",
-    y_top = 350,
-    y_steps = 50,
-    legend_position = "top"
+# Obtain data from drug testing facilities
+test_dosering_datasets <- get_csv_files(
+    file.path(
+        directory_path,
+        paste(antenne_reports_path, "testservice", sep = "/")
+    ),
+    "dosering"
 )
 
-m_milligrams <- grid.arrange(
-    arrangeGrob(
-        mdma_miligrams,
-        ncol = 1
-    )
+# Load the y-axis specifications for each substance
+doses_y_axis_specs <- read_json(
+    paste(current_path, "aux_files/doses_y_axis.json", sep = "/"),
+    simplifyVector = TRUE
 )
 
-ggsave(
-    "results/figures/mdma_milligrams.png",
-    plot = m_milligrams,
-    width = 10,
-    height = 10,
-    dpi = 600
-)
+# Obtain the plots for the dosages, volatility, and prices
+for (file in test_dosering_datasets) {
+    testing_doses_plots(file, doses_y_axis_specs, directory_path)
+}
 
-## XTC pills containing exclusively or mainly MDMA -- Dosage volatility in milligrams
-adjusted_volatility <- plot_series(
-    data,
-    "year",
-    "adj_volatility",
-    colors = "darkslategray",
-    title = " ",
-    y_label = "Volatility (mg)",
-    y_top = 2200,
-    y_steps = 220
-)
 
-adj_volatility <- grid.arrange(
-    arrangeGrob(
-        adjusted_volatility,
-        ncol = 1
-    )
-)
-
-ggsave(
-    "results/figures/adjusted_volatility.png",
-    plot = adj_volatility,
-    width = 10,
-    height = 10,
-    dpi = 600
-)
-
-## XTC pills containing exclusively or mainly MDMA -- Price per pill
-## and per milligram
-pill_price <- plot_series(
-    data[data["year"] >= 2002, ],
-    "year",
-    "price_per_pill",
-    colors = "chartreuse3",
-    title = "Price per pill",
-    y_label = "€",
-    y_top = 6,
-    y_steps = 1,
-    x_steps = 2
-)
-
-milligram_price <- plot_series(
-    data[data["year"] >= 2002, ],
-    "year",
-    "price_per_mg",
-    colors = "chartreuse3",
-    title = "Price per milligram",
-    y_label = "€/mg",
-    y_top = 0.06,
-    y_steps = 0.01,
-    x_steps = 2
-)
-
-prices <- grid.arrange(
-    arrangeGrob(
-        pill_price,
-        milligram_price,
-        ncol = 2
-    )
-)
-
-ggsave(
-    "results/figures/prices.png",
-    plot = prices,
-    width = 10,
-    height = 10,
-    dpi = 600
-)
 
 ## Number of drug samples submitted to the testing facilities.
 total_samples <- plot_series(

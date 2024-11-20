@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import pandas as pd
+import json
 
 def scrape_for_keywords(url, keywords):
     try:
@@ -28,63 +29,9 @@ def scrape_for_keywords(url, keywords):
         print(f"An error occurred: {e}")
         return None
 
-keywords = [
-    # DIMS program
-    "DIMS",
-    "Drug Informatie en Monitoring Systeem",
-    "drugsmonitoring",
-    "drugstesten",
-    "drugsanalyse",
-    "testlocaties drugs",
-    "laboratoriumanalyse",
-    # Red alerts
-    "Red Alert",
-    "Rode Alert",
-    "Rode waarschuwing",
-    "gevaarlijke drugs",
-    "levensgevaarlijke drugs",
-    "waarschuwing drugsgebruikers",
-    "waarschuwingsbericht",
-    "acute gezondheidsrisico",
-    "extreem gevaarlijke substanties",
-    # Drug warnings
-    "overdoseringsrisico",
-    "verontreinigde pillen",
-    "adulteratie drugs",
-    "hoog risico substanties",
-    "publiekswaarschuwing",
-    "risico voor gezondheid",
-    "preventie drugsgebruik",
-    "gezondheidsvoorlichting",
-    "landelijke waarschuwing",
-    "openbare gezondheidswaarschuwing",
-    # MDMA
-    "XTC",
-    "MDMA",
-    "ecstasy",
-    "XTC waarschuwing",
-    "gevaarlijke MDMA pillen",
-    " pil "
-    "pillen",
-    " tablet ",
-    "tabletten",
-    # Cocaine
-    "cocaine",
-    "cocaïne",
-    # Other drugs
-    "speed",
-    "amphetamine",
-    "amfetamine",
-    "ketamine",
-    " LSD ",
-    "heroine",
-    "heroïne",
-    # General
-    "drug"
-    "drugs",
-    "capsule",
-    "poeder",
-]
+# Load the keywords
+with open(r'./codes/data_construction/aux_files/telegraaf_keywords.json', 'r') as f:
+    keywords = json.load(f)
 
 start_date = datetime(2009, 1, 1)
 end_date = datetime(2023, 12, 31)
