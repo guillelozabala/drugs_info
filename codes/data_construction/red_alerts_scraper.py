@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import json
 
+# Define a function to scrape a webpage for specific keywords
 def scrape_for_keywords(url, keywords):
     try:
         # Fetch the content of the webpage
@@ -33,57 +34,48 @@ def scrape_for_keywords(url, keywords):
 with open(r'./codes/data_construction/aux_files/telegraaf_keywords.json', 'r') as f:
     keywords = json.load(f)
 
-start_date = datetime(2009, 1, 1)
-end_date = datetime(2023, 12, 31)
-delta = timedelta(days=1)
+# Define the start and end dates
+start_date, end_date, delta = datetime(2009, 1, 1), datetime(2023, 12, 31), timedelta(days=1)
 
-matches_dict = {}
-for keyword in keywords:
-    matches_dict[keyword] = []
+# Create an empty list to store the matches
+matches = []
 
-matches_df = pd.DataFrame({
-    'date': pd.to_datetime([]),
-    'n_links': pd.Series([], dtype='int'),
-    'keyword': pd.Series([], dtype='str'),
-    'count': pd.Series([], dtype='int'),
-    'url': pd.Series([], dtype='str')
-})
-
+# Loop over the dates and scrape the webpage for the keywords
 current_date = start_date
-
 while current_date <= end_date:
     url = f"https://www.telegraaf.nl/archief/{current_date.year}/{current_date.month:02d}/{current_date.day:02d}"
     results = scrape_for_keywords(url, keywords)
     results_keywords = results[0]
-    if results_keywords is None:
-        current_date += delta
-        continue
-
-    if any(count > 0 for count in results_keywords.values()):
-        for keyword, count in results_keywords.items():
-            if count > 0:
-                print(f"Keyword '{keyword}' found {count} times at {url}")
-                matches_dict[keyword].append(url)
-                new_row = pd.DataFrame([{
-                    'date': current_date,
-                    'n_links': results[1],
-                    'keyword': keyword,
-                    'count': count,
-                    'url': url
-                }])
-                matches_df = pd.concat([matches_df, new_row], ignore_index=True)
-
+    for keyword, count in results_keywords.items():
+        results_links = results[1]
+        matches.append({
+            'date': current_date,
+            'n_links': results_links,
+            'keyword': keyword,
+            'count': count,
+            'url': url
+        })
     current_date += delta
 
-matches_dict
-matches_df
+# Save the matches to a JSON file
+with open(r'./data/processed/red_alerts_news/telegraaf_matches.json', 'w') as f:
+    json.dump(matches, f, default=str)
 
-matches_df[(matches_df['date'].dt.year == 2014) & (matches_df['date'].dt.month == 11)]
-matches_df[(matches_df['date'].dt.year == 2014) & (matches_df['date'].dt.month == 12)]
-matches_df[(matches_df['date'].dt.year == 2015) & (matches_df['date'].dt.month == 1)]
+# Convert matches to a DataFrame
+matches_df = pd.DataFrame(matches)
 
+# Convert the 'date' column to datetime
+matches_df['date'] = pd.to_datetime(matches_df['date'])
 
-matches_df.to_csv(r'./data/processed/red_alert_news/telegraaf_matches.csv', index=False)
+# Aggregate the observations at the year-month level for each keyword
+matches_df['year_month'] = matches_df['date'].dt.to_period('M')
+monthly_aggregated_df = matches_df.groupby(['year_month', 'keyword']).agg({
+    'count': 'sum',
+    'n_links': 'sum'
+}).reset_index()
+
+# Save the aggregated data to a CSV file
+monthly_aggregated_df.to_csv(r'./data/processed/red_alerts_news/telegraaf_monthly_aggregated.csv', index=False)
 
 # Aggregate the observations at the year level for each keyword
 matches_df['year'] = matches_df['date'].dt.year
@@ -92,12 +84,5 @@ yearly_aggregated_df = matches_df.groupby(['year', 'keyword']).agg({
     'n_links': 'sum'
 }).reset_index()
 
-yearly_aggregated_df.to_csv(r'./data/processed/red_alert_news/telegraaf_yearly_aggregated.csv', index=False)
-
-
-# if results is None:
-#     current_date += delta
-#     continue
-# results_keywords = results[0]
-#     current_date += delta
-#     continue
+# Save the aggregated data to a CSV file
+yearly_aggregated_df.to_csv(r'./data/processed/red_alerts_news/telegraaf_yearly_aggregated.csv', index=False)
