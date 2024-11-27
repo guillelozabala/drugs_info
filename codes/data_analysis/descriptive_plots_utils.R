@@ -138,7 +138,9 @@ plot_series <- function(
     y_top,
     y_steps,
     x_steps = 1,
-    legend_position = "none"
+    legend_position = "none",
+    years_custom_range = TRUE,
+    slides = FALSE
 ) {
     # Convert data to long format if y_vars has multiple columns
     data_long <- data_long(data, y_vars)
@@ -151,6 +153,20 @@ plot_series <- function(
     # Obtain the range of x values
     years <- x_axis_custom_range(data, x_var)
 
+    if (years_custom_range) {
+        # Obtain the range of x values
+        years_custom <- scale_x_continuous(
+            breaks = seq(years[1], years[2], by = x_steps),
+            limits = c(years[1], years[2]),
+            expand = c(0, 0.5)
+        )
+    } else {
+        years_custom <- NULL
+    }
+
+    # Obtain the range of x values
+    years <- x_axis_custom_range(data, x_var)
+
     # Create ggplot line plot
     p <- data_long |>
         ggplot2::ggplot(aes(x = .data[[x_var]], y = value, color = series)) +
@@ -158,12 +174,8 @@ plot_series <- function(
         geom_point(size = 4) +
         scale_color_manual(values = colors) +
         labs(title = title, x = " ", y = y_label, col = NULL) +
-        dims_theme(legend_position) +
-        scale_x_continuous(
-            breaks = seq(years[1], years[2], by = x_steps),
-            limits = c(years[1], years[2]),
-            expand = c(0, 0.5)
-        ) +
+        dims_theme(legend_position, slides) +
+        years_custom +
         scale_y_continuous(
             breaks = seq(0, y_top, by = y_steps),
             limits = c(0, y_top),
@@ -174,8 +186,8 @@ plot_series <- function(
 }
 
 # Common features for the plots
-dims_theme <- function(legend_position) {
-
+dims_theme <- function(legend_position, slides = FALSE) {
+    
     theme_minimal() +
     theme(
         plot.title = element_text(
@@ -185,11 +197,11 @@ dims_theme <- function(legend_position) {
             margin = margin(b = 20)
         ),
         axis.title.x = element_text(
-            size = 14,
+            size = 10*(slides) + 14,
             face = "bold"
         ),
         axis.title.y = element_text(
-            size = 14,
+            size = 10*(slides) + 14,
             # face = "bold"
             margin = margin(r = 20)
         ),

@@ -87,71 +87,72 @@ for (column in colnames(total_samples)[2:ncol(total_samples)]) {
     )
 }
 
-
 ###
 # Do the same for the Telegraaf data (CLEAN THIS MESS)
 ###
-telegraaf_data_path <- "data/processed/red_alerts_news/telegraaf_yearly_aggregated.csv"
-telegraaf_data_csv  <- file.path(
-    paste(directory_path, telegraaf_data_path, sep = "/")
+
+# Define the path to the data
+red_alerts_loc <- "data/processed/red_alerts_news/"
+red_alerts_path <- paste(directory_path, red_alerts_loc, sep = "/")
+
+# Load the data
+telegraaf_monthly <- read.csv(
+    paste(red_alerts_path, "telegraaf_monthly_aggregated.csv", sep = "/")
 )
-telegraaf_data  <- read.csv(telegraaf_data_csv)
-telegraaf_data
 
-# telegraaf_data <- telegraaf_data |>
-#     dplyr::group_by(year) |>
-#     dplyr::summarise(n_articles = sum(n_links), n_count = sum(count))
+# Select the words of interest
+keywords <- c("XTC", "MDMA", "ecstasy", "cocaine", "cocaïne")
+telegraaf_monthly <- telegraaf_monthly |>
+    dplyr::filter(keyword %in% keywords)
 
-# Calculate the relative presence of the keywords
-telegraaf_data <- telegraaf_data |>
-    dplyr::mutate(n_per_article = count / n_links)
+# Get relative presence of the keywords
+telegraaf_monthly <- telegraaf_monthly |>
+    dplyr::mutate(n_per_articles = count / n_links)
 
-
-
-
-
-# Filter the data for the keywords of interest
-telegraaf_data_xtc <- telegraaf_data |>
-    dplyr::filter(
-        (keyword == "XTC") | (keyword == "MDMA") | (keyword == "ecstasy")
-    )
-
-telegraaf_data_cocaine <- telegraaf_data |>
-    dplyr::filter(
-        (keyword == "cocaine") | (keyword == "cocaïne")
-    )
-
-# Calculate the number of articles and the number of mentions
-telegraaf_data_xtc <- telegraaf_data_xtc |>
-    dplyr::group_by(year) |>
-    dplyr::summarise(n_articles = sum(n_links), n_count = sum(count))
-
-telegraaf_data_cocaine <- telegraaf_data_cocaine |>
-    dplyr::group_by(year) |>
-    dplyr::summarise(n_articles = sum(n_links), n_count = sum(count))
-
-# Calculate the relative presence of the keywords
-telegraaf_data_xtc <- telegraaf_data_xtc |>
-    dplyr::mutate(n_per_article = n_count / n_articles)
-
-telegraaf_data_cocaine <- telegraaf_data_cocaine |>
-    dplyr::mutate(n_per_article = n_count / n_articles)
-
-# Join the data
-joined_data <- telegraaf_data_xtc |>
-    dplyr::inner_join(telegraaf_data_cocaine, by = "year") |>
+# Aggregate the results at the month level by kind of drug
+telegraaf_monthly <- telegraaf_monthly |>
     dplyr::mutate(
-        n_per_article_xtc = n_per_article.x,
-        n_per_article_cocaine = n_per_article.y
+        drug = dplyr::case_when(
+            keyword %in% c("XTC", "MDMA", "ecstasy") ~ "MDMA",
+            keyword %in% c("cocaine", "cocaïne") ~ "Cocaine",
+            TRUE ~ NA_character_
+        )
     ) |>
-    dplyr::select(year, n_per_article_xtc, n_per_article_cocaine)
-
-## Share of news titles mentioning MDMA or cocaine, conditional on being mentioned.
-joined_data <- joined_data |>
-    dplyr::rename(
-        "MDMA" = "n_per_article_xtc",
-        "Cocaine" = "n_per_article_cocaine"
+    dplyr::group_by(year_month, drug, n_links) |>
+    dplyr::summarise(
+        n_count = sum(count),
+        share = sum(n_per_articles),
+        .groups = "drop"
+    ) |>
+    tidyr::pivot_wider(
+        names_from = drug,
+        values_from = c(n_count, share),
+        values_fill = list(n_count = 0, share = 0)
     )
+
+
+telegraaf_monthly$year_month_date <- as.Date(paste0(telegraaf_monthly$year_month, "-01"))
+telegraaf_monthly
+
+plot_series(
+    telegraaf_monthly[telegraaf_monthly$year_month_date >= "2013-01-01", ],
+    "year_month_date",
+    c("share_MDMA", "share_Cocaine"),
+    colors = c("deeppink2", "darkorchid"),
+    title = " ",
+    y_label = "Relative presence",
+    y_top = 0.003,
+    y_steps = 0.0005,
+    x_steps = 6,
+    legend_position = "top",
+    years_custom_range = FALSE
+)
+
+
+
+
+data_long(telegraaf_monthly, "share") |> head()
+
 
 news_presence <- plot_series(
     joined_data,
@@ -175,6 +176,115 @@ news_presence_grob <- grid.arrange(
 ggsave(
     "results/figures/news_presence.png",
     plot = news_presence_grob,
+    width = 10,
+    height = 10,
+    dpi = 600
+)
+
+
+# Load the data
+telegraaf_yearly <- read.csv(
+    paste(red_alerts_path, "telegraaf_yearly_aggregated.csv", sep = "/")
+)
+
+# Select the words of interest
+keywords <- c("XTC", "MDMA", "ecstasy", "cocaine", "cocaïne")
+telegraaf_yearly <- telegraaf_yearly |>
+    dplyr::filter(keyword %in% keywords)
+
+# Get relative presence of the keywords
+telegraaf_yearly <- telegraaf_yearly |>
+    dplyr::mutate(n_per_articles = count / n_links)
+
+# Aggregate the results at the month level by kind of drug
+telegraaf_yearly <- telegraaf_yearly |>
+    dplyr::mutate(
+        drug = dplyr::case_when(
+            keyword %in% c("XTC", "MDMA", "ecstasy") ~ "MDMA",
+            keyword %in% c("cocaine", "cocaïne") ~ "Cocaine",
+            TRUE ~ NA_character_
+        )
+    ) |>
+    dplyr::group_by(year, drug, n_links) |>
+    dplyr::summarise(
+        n_count = sum(count),
+        share = sum(n_per_articles),
+        .groups = "drop"
+    ) |>
+    tidyr::pivot_wider(
+        names_from = drug,
+        values_from = c(n_count, share),
+        values_fill = list(n_count = 0, share = 0)
+    )
+
+
+plot_series(
+    telegraaf_yearly[telegraaf_yearly$year >= 2012, ],
+    "year",
+    c("share_MDMA", "share_Cocaine"),
+    colors = c("deeppink2", "darkorchid"),
+    title = " ",
+    y_label = "Relative presence",
+    y_top = 0.0015,
+    y_steps = 0.0003,
+    legend_position = "top",
+    years_custom_range = FALSE
+)
+
+###
+
+# Define the path to the data
+euda_path <- "data/processed/euda/"
+
+# Define the path to the data
+total_euda_path <- file.path(
+    directory_path,
+    paste(euda_path, "euda_tables_1.csv", sep = "/")
+)
+
+# Load the data
+total_euda <- read.csv(total_euda_path)
+
+# Replace NA with zeros and convert all values to integers
+total_euda[is.na(total_euda)] <- 0  # Replace NA with zeros
+total_euda[] <- lapply(total_euda, function(x) as.integer(x))  # Convert all columns to integers
+
+# Create a new column that is the sum of all columns but the first one, replacing NAs with 0
+total_euda <- total_euda |>
+    dplyr::rename(year = "Year")
+
+total_euda$sum_others <- rowSums(total_euda[, !names(total_euda) %in% "year"])
+
+total_euda
+
+
+data_long(total_euda, "sum_others")$value
+
+library(showtext)
+
+# Enable showtext
+showtext_auto()
+
+# Add Palatino font to showtext
+font_add(family = "Palatino", regular = "C:/Users/g-mart36/Downloads/Palatino Linotype.ttf") # Adjust the file path if needed
+
+euda_new_substances <- plot_series(
+    total_euda,
+    x_var = "year",
+    y_vars = "sum_others",
+    colors = "#565175",
+    title = " ",
+    y_label = "#",
+    y_top = 450,
+    y_steps = 50,
+    # legend_position = "top",
+    # years_custom_range = FALSE,
+    slides = TRUE
+)
+
+ggsave(
+    "results/figures/descriptives/euda_new_substances.png",
+    plot = euda_new_substances,
     width = 10,
     height = 10,
     dpi = 600
