@@ -1,6 +1,11 @@
 
 # Plot results of the doses (range, volatility and prices)
-testing_doses_plots <- function(file, y_axis_values, directory_path) {
+testing_doses_plots <- function(
+    file,
+    y_axis_values,
+    directory_path,
+    slides = FALSE
+) {
 
     # Read the data
     df <- read.csv(file)
@@ -32,33 +37,35 @@ testing_doses_plots <- function(file, y_axis_values, directory_path) {
     plots[[1]] <- plot_series(
         df_plots,
         y_vars = c("Minimum dosis", "Maximum dosis", "Mean dosis"),
-        colors = c("darkorchid", "deeppink", "deepskyblue2"),
+        colors = c("#538a95", "#565175", "#67b79e"),
         title = " ",
         y_label = "Milligrams",
         y_top = y_specs_range$y_top,
         y_steps = y_specs_range$y_steps,
-        legend_position = "top"
+        legend_position = "top",
+        slides = slides
     )
 
     # Set the path to save the results
     results_paths[[1]] <- paste0(save_path, "range_doses_", substance, ".png")
 
     # Extract the y-axis specifications
-    y_specs_volatility <-  y_axis_values[["doses_volatility"]][[substance]]
+    y_specs_sd <-  y_axis_values[["doses_sd"]][[substance]]
 
     # Plot the volatility of the doses
     plots[[2]] <- plot_series(
         df_plots,
-        y_vars = "adj_volatility",
-        colors = "darkslategray",
+        y_vars = "dose_sd", # "adj_volatility" 
+        colors = "#538a95",
         title = " ",
-        y_label = "Volatility (mg)",
-        y_top = y_specs_volatility$y_top,
-        y_steps = y_specs_volatility$y_steps,
+        y_label = "Standard deviation (mg)", # "Volatility (mg)"
+        y_top = y_specs_sd$y_top, # y_specs_volatility$y_top,
+        y_steps = y_specs_sd$y_steps, #y_specs_volatility$y_steps,
+        slides = slides
     )
 
     # Set the path to save the results
-    results_paths[[2]] <- paste0(save_path, "volatility_", substance, ".png")
+    results_paths[[2]] <- paste0(save_path, "sd_", substance, ".png")
 
     # Check if the data contains price information
     price_tags <- c("price_per_gram", "price_per_pill", "price_per_tab")
@@ -78,11 +85,12 @@ testing_doses_plots <- function(file, y_axis_values, directory_path) {
         plots[[3]] <- plot_series(
             df_plots[start_data:nrow(df_plots), ],
             y_vars = price_tag,
-            colors = "chartreuse3",
+            colors = "#67b79e",
             title = " ",
             y_label = "€",
             y_top = y_specs_prices_unit$y_top,
-            y_steps = y_specs_prices_unit$y_steps
+            y_steps = y_specs_prices_unit$y_steps,
+            slides = slides
         )
 
         # Set the path to save the results
@@ -103,11 +111,12 @@ testing_doses_plots <- function(file, y_axis_values, directory_path) {
         plots[[4]] <- plot_series(
             df_plots[start_data_mg:nrow(df_plots), ],
             y_vars = "price_per_mg",
-            colors = "chartreuse3",
+            colors = "#67b79e",
             title = " ",
             y_label = "€/mg",
             y_top = y_specs_prices_mgs$y_top,
-            y_steps = y_specs_prices_mgs$y_steps
+            y_steps = y_specs_prices_mgs$y_steps,
+            slides = slides
         )
 
         # Set the path to save the results
@@ -121,8 +130,8 @@ testing_doses_plots <- function(file, y_axis_values, directory_path) {
             file.path(directory_path, results_paths[[figure]]),
             plot = plots[[figure]],
             width = 10,
-            height = 10,
-            dpi = 600
+            height = 8,
+            dpi = 150
         )
     }
 }
@@ -186,8 +195,14 @@ plot_series <- function(
 }
 
 # Common features for the plots
-dims_theme <- function(legend_position, slides = FALSE) {
-    
+dims_theme <- function(legend_position, slides) {
+
+    if (slides == TRUE) {
+        font_plot <- "Palatino"
+    } else {
+        font_plot <- "sans"
+    }
+
     theme_minimal() +
     theme(
         plot.title = element_text(
@@ -197,15 +212,14 @@ dims_theme <- function(legend_position, slides = FALSE) {
             margin = margin(b = 20)
         ),
         axis.title.x = element_text(
-            size = 10*(slides) + 14,
+            size = 14,
             face = "bold"
         ),
         axis.title.y = element_text(
-            size = 10*(slides) + 14,
-            # face = "bold"
+            size = 16 * (slides) + 18,
             margin = margin(r = 20)
         ),
-        axis.text = element_text(size = 12),
+        axis.text = element_text(size = 11 * (slides) + 16),
         panel.grid.major = element_line(color = "grey80"),
         panel.grid.minor = element_blank(),
         axis.text.x = element_text(
@@ -213,11 +227,78 @@ dims_theme <- function(legend_position, slides = FALSE) {
             hjust = 1
         ),
         legend.position = legend_position,
-        text = element_text(size = 12, family = "sans"),
-        legend.text = element_text(size = 12),
+        text = element_text(size = 16, family = font_plot),
+        legend.text = element_text(size = 16 * (slides) + 16),
         legend.key.size = unit(1.5, "lines")
     )
 
+}
+
+# Obtain bar charts
+histogram_plot <- function(
+    data,
+    x_var,
+    y_var,
+    highlight,
+    colors = NULL,
+    title,
+    y_label,
+    y_top,
+    y_steps
+) {
+
+    histogram <- data |>
+        ggplot(
+            aes(
+                x = reorder(!!rlang::sym(x_var), -!!rlang::sym(y_var)),
+                y = !!rlang::sym(y_var),
+                fill = highlight
+            )
+        ) +
+        geom_bar(stat = "identity") +
+        scale_fill_manual(
+            values = colors
+        ) +
+        theme_minimal() +
+        theme(
+            plot.title = element_text(
+                hjust = 0.5,
+                size = 18,
+                face = "bold",
+                margin = margin(b = 20)
+            ),
+            axis.title.x = element_text(
+                size = 18,
+                face = "bold"
+            ),
+            axis.title.y = element_text(
+                size = 25,
+                margin = margin(r = 20)
+            ),
+            axis.text = element_text(size = 25),
+            panel.grid.major = element_line(color = "grey80"),
+            panel.grid.minor = element_blank(),
+            axis.text.x = element_text(
+                angle = 45,
+                hjust = 1
+            ),
+            legend.position = "none",
+            text = element_text(size = 12, family ="Palatino"),
+            legend.text = element_text(size = 12),
+            legend.key.size = unit(1.5, "lines")
+        ) +
+        labs(
+            title = " ",
+            x = "",
+            y = y_label
+        ) +
+        scale_y_continuous(
+            breaks = seq(0, y_top, by = y_steps),
+            limits = c(0, y_top),
+            expand = c(0, 0)
+        )
+
+    return(histogram)
 }
 
 # Convert data to long format

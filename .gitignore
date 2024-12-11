@@ -9,4 +9,7 @@ data/**/**/**/*.json
 data/**/**/**/*.pdf
 data/**/**/**/*.gpkg
 data/**/**/**/*.xlsx
+codes/**/.exe
+codes/**/**/*.ttf
+codes/**/**/*.json
 results/figures/**/*.png
