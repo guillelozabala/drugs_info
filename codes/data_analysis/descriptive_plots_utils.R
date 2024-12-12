@@ -235,7 +235,7 @@ dims_theme <- function(legend_position, slides) {
 }
 
 # Obtain bar charts
-histogram_plot <- function(
+bar_chart_plot <- function(
     data,
     x_var,
     y_var,
@@ -247,7 +247,7 @@ histogram_plot <- function(
     y_steps
 ) {
 
-    histogram <- data |>
+    bar_chart <- data |>
         ggplot(
             aes(
                 x = reorder(!!rlang::sym(x_var), -!!rlang::sym(y_var)),
@@ -298,7 +298,7 @@ histogram_plot <- function(
             expand = c(0, 0)
         )
 
-    return(histogram)
+    return(bar_chart)
 }
 
 # Convert data to long format
