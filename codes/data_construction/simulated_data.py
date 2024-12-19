@@ -181,3 +181,26 @@ for _ in range(500):
     end_time = time.time()
     times.append(end_time - start_time)
 print(f"Average time taken by generate_stochastic_block_model_lists: {np.mean(times):.4f} seconds")
+
+
+# buurts
+import pandas as pd
+
+path = r'./data/source/neighborhood_data/'
+df = pd.read_csv(path + 'Observations.csv', sep = ';')
+
+wk_observations = df[df['WijkenEnBuurten'].str.startswith('WK')].reset_index(drop=True)
+print(wk_observations)
+
+wk_young = wk_observations[(wk_observations['Measure'] == '53050') | (wk_observations['Measure'] == '53310') | (wk_observations['Measure'] == '53715')]
+print(wk_young)
+
+# Sum values for each unique 'WijkenEnBuurten'
+wk_observations['Value'] = pd.to_numeric(wk_observations['Value'], errors='coerce').astype('Int64')
+wk_sum = wk_observations.groupby('WijkenEnBuurten')['Value'].sum().reset_index()
+
+# Display the result
+print(wk_sum)
+
+wk_sum['edges'] = [[0.9 if i == j else 0.1 for j in range(len(wk_sum['WijkenEnBuurten']))] for i in range(len(wk_sum['WijkenEnBuurten']))]
+fake_ndl = nx.stochastic_block_model(wk_sum['Value'], wk_sum['edges'], seed=0)
