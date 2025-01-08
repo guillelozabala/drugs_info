@@ -9,6 +9,9 @@ data/**/**/**/*.json
 data/**/**/**/*.pdf
 data/**/**/**/*.gpkg
 data/**/**/**/*.xlsx
+data/**/**/**/*.gz
+data/**/**/**/*.npz
+data/**/**/**/*.pkl
 codes/**/.exe
 codes/**/**/*.ttf
 codes/**/**/*.json
