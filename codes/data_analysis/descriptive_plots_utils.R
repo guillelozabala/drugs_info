@@ -129,7 +129,7 @@ testing_doses_plots <- function(
         ggsave(
             file.path(directory_path, results_paths[[figure]]),
             plot = plots[[figure]],
-            width = 10,
+            width = 12,
             height = 8,
             dpi = 150
         )
@@ -145,6 +145,7 @@ plot_series <- function(
     title,
     y_label,
     y_top,
+    y_min = 0,
     y_steps,
     x_steps = 1,
     legend_position = "none",
@@ -186,8 +187,8 @@ plot_series <- function(
         dims_theme(legend_position, slides) +
         years_custom +
         scale_y_continuous(
-            breaks = seq(0, y_top, by = y_steps),
-            limits = c(0, y_top),
+            breaks = seq(y_min, y_top, by = y_steps),
+            limits = c(y_min, y_top),
             expand = c(0, 0)
         )
 

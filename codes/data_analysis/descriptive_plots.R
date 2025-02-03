@@ -49,11 +49,11 @@ telegraaf_news_path <- file.path(
 euda_location <- "data/source/euda/"
 euda_npss_path <- file.path(
     directory_path,
-    paste0(euda_location, "euda_tables_1.csv") #?
+    paste0(euda_location, "edr2024-nps-table-2_en.csv") #?
 )
 euda_mdma_path <- file.path(
     directory_path,
-    paste0(euda_location, "GPS-73.xlsx") #?
+    paste0(euda_location, "GPS-73.xlsx") 
 )
 
 # From Google Trends:
@@ -187,7 +187,8 @@ euda_npss[] <- lapply(euda_npss, function(x) as.integer(x))
 # Rename and aggregate the columns
 euda_npss <- euda_npss |>
     dplyr::mutate(
-        sum_others = rowSums(euda_npss[, !names(euda_npss) %in% "Year"])
+        sum_others = rowSums(euda_npss[, !names(euda_npss) %in% "Year"]),
+        cumulative_sum_others = cumsum(sum_others)
     ) |>
     dplyr::rename(year = "Year")
 
@@ -218,6 +219,11 @@ google_trends$year_month_date <- as.Date(
     paste0(google_trends$year_month, "-01")
 )
 
+# Filter the data for the years of interest
+google_trends_restricted <- google_trends |>
+    dplyr::filter(
+        year_month >= "2015-01" & year_month <= "2019-01"
+    )
 
 # 7. Load the font -------------------------------------------------------------
 
@@ -266,7 +272,7 @@ for (column in colnames(testservice_total)[2:ncol(testservice_total)]) {
             paste0(results_location, "total_samples_", column, ".png")
         ),
         plot = samples_plot,
-        width = 10,
+        width = 12,
         height = 8,
         dpi = 150
     )
@@ -278,6 +284,16 @@ cocaine_plot_wline <- samples_plots_list$Cocaine + geom_vline(
     linetype = "dashed",
     color = "#538a95",
     linewidth = 1.5
+)
+
+mdma_plot_wline <- samples_plots_list$MDMA + annotate(
+    "rect",
+    xmin = 2014,
+    xmax = 2016,
+    ymin = 0,
+    ymax = 3600,
+    alpha = .1,
+    fill = "#538a95"
 )
 
 # Other plots: Substances comparison
@@ -335,7 +351,18 @@ ggsave(
         paste0(results_location, "total_samples_", "cocaine_wline", ".png")
     ),
     plot = cocaine_plot_wline,
-    width = 10,
+    width = 12,
+    height = 8,
+    dpi = 150
+)
+
+ggsave(
+    file.path(
+        directory_path,
+        paste0(results_location, "total_samples_", "mdma_wline", ".png")
+    ),
+    plot = mdma_plot_wline,
+    width = 12,
     height = 8,
     dpi = 150
 )
@@ -346,7 +373,7 @@ ggsave(
         paste0(results_location, "total_samples_", "comparison", ".png")
     ),
     plot = compared_samples_plot,
-    width = 10,
+    width = 12,
     height = 8,
     dpi = 150
 )
@@ -357,7 +384,7 @@ ggsave(
         paste0(results_location, "total_samples_", "nps_synt", ".png")
     ),
     plot = synt_plot,
-    width = 10,
+    width = 12,
     height = 8,
     dpi = 150
 )
@@ -368,7 +395,7 @@ ggsave(
         paste0(results_location, "samples_submitted_2023.png")
     ),
     plot = testservice_total_plot,
-    width = 10,
+    width = 15,
     height = 8,
     dpi = 150
 )
@@ -396,7 +423,7 @@ ggsave(
         paste0(results_location, "news_presence_yearly.png", sep = "/")
     ),
     plot = telegraaf_presence,
-    width = 10,
+    width = 12,
     height = 8,
     dpi = 150
 )
@@ -413,6 +440,19 @@ euda_new_substances <- plot_series(
     y_label = "Number of NPS",
     y_top = 450,
     y_steps = 50,
+    slides = TRUE
+)
+
+# Number of detected NPS by year, cumulative
+euda_new_substances_cum <- plot_series(
+    euda_npss,
+    x_var = "year",
+    y_vars = "cumulative_sum_others",
+    colors = "#565175",
+    title = " ",
+    y_label = "Number of NPS",
+    y_top = 4500,
+    y_steps = 500,
     slides = TRUE
 )
 
@@ -436,8 +476,19 @@ ggsave(
         paste0(results_location, "euda_new_substances.png", sep = "/")
     ),
     plot = euda_new_substances,
-    width = 10,
-    height = 10,
+    width = 12,
+    height = 9,
+    dpi = 150
+)
+
+ggsave(
+    file.path(
+        directory_path,
+        paste0(results_location, "euda_new_substances_cum.png", sep = "/")
+    ),
+    plot = euda_new_substances_cum,
+    width = 12,
+    height = 9,
     dpi = 150
 )
 
@@ -447,7 +498,7 @@ ggsave(
         paste0(results_location, "euda_mdma_rates.png", sep = "/")
     ),
     plot = euda_mdma_plot,
-    width = 10,
+    width = 15,
     height = 8,
     dpi = 150
 )
@@ -475,6 +526,26 @@ google_trends_plot <- plot_series(
     linewidth = 1.5
 )
 
+google_trends_plot_restricted <- plot_series(
+    google_trends_restricted,
+    "year_month_date",
+    c("MDMA", "Cocaine", "Heroin", "Hashish"),
+    colors = c("#565175", "#e4491c", "#ffb727", "#67b79e"),
+    title = " ",
+    y_label = "Trend index",
+    y_top = 100,
+    y_steps = 10,
+    x_steps = 128,
+    slides = TRUE,
+    years_custom_range = FALSE,
+    legend_position = "top"
+) + geom_vline(
+    xintercept = as.Date("2016-10-01"),
+    linetype = "dashed",
+    color = "black",
+    linewidth = 1.5
+)
+
 # Save the plot
 ggsave(
     file.path(
@@ -486,3 +557,15 @@ ggsave(
     height = 16,
     dpi = 100
 )
+
+ggsave(
+    file.path(
+        directory_path,
+        paste0(results_location, "google_trends_restricted.png", sep = "/")
+    ),
+    plot = google_trends_plot_restricted,
+    width = 12,
+    height = 8,
+    dpi = 150
+)
+

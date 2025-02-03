@@ -1,4 +1,4 @@
-from codes.data_construction.antenne_reports_clearing_utils import *
+from codes.data_construction.antenne_reports_cleaning_utils import *
 
 path_2023 = r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/'
 
