@@ -86,6 +86,63 @@ def load_and_append_csvs(folder_path):
     all_dfs = []
     for file_name in os.listdir(folder_path):
         if file_name.endswith('.csv'):
-            df = pd.read_csv(os.path.join(folder_path, file_name))
+            df = pd.read_csv(os.path.join(folder_path, file_name), dtype=str)
             all_dfs.append(df)
     return pd.concat(all_dfs, ignore_index=True)
+
+def yearly_incidents(df, dict):
+
+    # Beware of the dots in 'incidents'
+    df['incidents'] = df['incidents'].str.replace('.', '', regex=False)
+
+    # Convert all columns to numeric except 'drug' and 'origin'
+    cols_to_convert = df.columns.difference(['drug', 'origin'])
+    df.loc[:, cols_to_convert] = df[cols_to_convert].apply(pd.to_numeric, errors='coerce')
+
+    # Filter and rename values in 'origin'
+    df = df.loc[df['year'] >= 2011].copy()
+
+    df.loc[:, 'origin'] = df['origin'].replace(dict)
+
+    # Group by year and drug, then sum incidents from specified origins
+    seh_origins = ['SEH-MDI-ziekenhuizen', 'SEH-LIS-ziekenhuizen']
+    grouped = df[df['origin'].isin(seh_origins)].groupby(['year', 'drug'])['incidents'].sum().reset_index()
+
+    # Add new rows with summed incidents and NaN for other columns
+    new_rows = []
+    for _, row in grouped.iterrows():
+        new_row = {col: (row['incidents'] if col == 'incidents' else row[col] if col in ['year', 'drug'] else float('NaN')) for col in df.columns}
+        new_row['origin'] = 'SEH-MDI+LIS-ziekenhuizen'
+        new_rows.append(new_row)
+    df = pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)
+
+    # Compute differences per group
+    df = df.sort_values(by=['drug', 'origin', 'year'])
+    grouped = df.groupby(['drug', 'origin'])
+    df['incidents_diff'] = grouped['incidents'].diff()
+
+    for severity in ['light', 'moderate', 'severe']:
+        df.loc[:, f'{severity}_incidents'] = (
+            df['incidents'] * df[f'DOG_{severity}_pcnt'] * 0.01
+        )
+        df.loc[:, f'{severity}_incidents_diff'] = grouped[f'{severity}_incidents'].diff()
+
+    # Use mask() to conditionally replace values
+    mask = df["year"] >= 2018
+    df['incidents'] = df['incidents_diff'].mask(mask, df['incidents'])
+
+    for severity in ['light', 'moderate', 'severe']:
+        df.loc[:, f'{severity}_incidents'] = (
+            df[f'{severity}_incidents_diff'].mask(mask, df[f'{severity}_incidents'])
+        )
+
+    # Drop the '_diffs' columns
+    df = df.drop(columns=[col for col in df.columns if col.endswith('_diff')])
+
+    # Drop the intensity percentage columns 
+    df = df.drop(columns=[col for col in df.columns if col.startswith('DOG_')])
+
+    # Drop irrelevant columns
+    df = df.drop('hospital_admission_pcnt', axis=1)
+
+    return df

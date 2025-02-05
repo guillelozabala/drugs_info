@@ -31,5 +31,16 @@ incidents_22 = load_and_append_csvs(source_path + '2023')
 # Concatenate the datasets
 joint_incidents = pd.concat([incident_reports_up_to_19, incidents_20, incidents_21, incidents_22], ignore_index=True)
 
+origin_mapping = {
+    'Ziekenhuizen': 'SEH-MDI-ziekenhuizen',
+    'Totaa': 'Totaal',
+    'EHB': 'EHBO-posten',
+    'EHBO': 'EHBO-posten',
+    'Politieartsen': 'Politieartsen/Forensisch artsen',
+    'Forensisch artsen': 'Politieartsen/Forensisch artsen'
+}
+
+incidents = yearly_incidents(joint_incidents, origin_mapping)
+
 # Save the cleaned dataset
-joint_incidents.to_csv(save_path + 'joint_incidents.csv', index=False)
+incidents.to_csv(save_path + 'joint_incidents.csv', index=False)

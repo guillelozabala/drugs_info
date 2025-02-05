@@ -1,5 +1,5 @@
 
-# 1. Load Libraries ------------------------------------------------------------
+# 1. Load Libraries and set options --------------------------------------------
 
 library(tidyverse)
 library(jsonlite)
@@ -7,6 +7,9 @@ library(gridExtra)
 library(grid)
 library(lintr)
 library(showtext)
+
+# Set options
+options(max.print = 200)
 
 # 2. Load Functions -----------------------------------------------------------
 
@@ -37,6 +40,13 @@ testservice_total_paths <- get_csv_files(
     "total"
 )
 
+# From the National Reports:
+national_location <- "data/processed/national_reports/"
+incidents_path <- file.path(
+    directory_path,
+    paste0(national_location, "incidents/joint_incidents.csv")
+)
+
 # From De Telegraaf:
 telegraaf_news_location <- "data/processed/red_alerts_news/"
 # From De Telegraaf:
@@ -53,7 +63,7 @@ euda_npss_path <- file.path(
 )
 euda_mdma_path <- file.path(
     directory_path,
-    paste0(euda_location, "GPS-73.xlsx") 
+    paste0(euda_location, "GPS-73.xlsx")
 )
 
 # From Google Trends:
@@ -80,6 +90,12 @@ total_samples_y_axis_specs <- read_json(
     simplifyVector = TRUE
 )
 
+# Load the y-axis specifications for hospitalizations
+hospitalizations_y_axis_specs <- read_json(
+    paste(current_path, "aux_files/hospitalizations_y_axis.json", sep = "/"),
+    simplifyVector = TRUE
+)
+
 # 5. Load Data ----------------------------------------------------------------
 
 # No need to load *testservice_drugs*, since the function *testing_doses_plots*
@@ -87,6 +103,9 @@ total_samples_y_axis_specs <- read_json(
 
 # From the Antenne Reports:
 testservice_total <- read.csv(testservice_total_paths)
+
+# From the National Reports:
+incidents <- read.csv(incidents_path)
 
 # From De Telegraaf:
 telegraaf_yearly_news <- read.csv(telegraaf_news_path)
@@ -139,7 +158,22 @@ testservice_total_pivoted_plot <- testservice_total_pivoted |>
     dplyr::filter(year == 2023) |>
     dplyr::filter(drug != "total")
 
-# --- 6.2. De Telegraaf --------------------------------------------------------
+# --- 6.2. National reports ----------------------------------------------------
+
+# Filter and rename the columns
+incidents_plots <- incidents |>
+    dplyr::filter(year >= 2012) |>
+    dplyr::rename(
+        "Light" = "light_incidents",
+        "Moderate" = "moderate_incidents",
+        "Severe" = "severe_incidents"
+    )
+
+# Keep data from hospitals
+incidents_hospitals <- incidents_plots |>
+    dplyr::filter(origin == "SEH-MDI-ziekenhuizen")
+
+# --- 6.3. De Telegraaf --------------------------------------------------------
 
 # Select the words of interest
 keywords <- c("XTC", "MDMA", "ecstasy", "cocaine", "cocaïne")
@@ -178,7 +212,7 @@ telegraaf_yearly_news <- telegraaf_yearly_news |>
         "Cocaine share" = "share_Cocaine"
     )
 
-# --- 6.3. EUDA ----------------------------------------------------------------
+# --- 6.4. EUDA ----------------------------------------------------------------
 
 # Replace NA with zeros and convert all values to integers
 euda_npss[is.na(euda_npss)] <- 0
@@ -202,7 +236,7 @@ euda_mdma$highlight <- ifelse(
     "normal"
 )
 
-# ---- 6.4. Google Trends ------------------------------------------------------
+# ---- 6.5. Google Trends ------------------------------------------------------
 
 # Rename the columns
 google_trends <- google_trends |>
@@ -400,7 +434,75 @@ ggsave(
     dpi = 150
 )
 
-# --- 8.2. De Telegraaf --------------------------------------------------------
+# --- 8.2. National reports ----------------------------------------------------
+
+# Select the substances to plot
+unique_names <- unique(incidents_hospitals$drug)
+dropped_substances <- c("Ketamine", "Gas", "34MMC", "Opioids (synthetic)")
+complete_substances <- unique_names[!unique_names %in% dropped_substances]
+
+# Create lists to store the plots
+hosp_plots_list <- list()
+hosp_plots_severity_list <- list()
+
+for (substance in complete_substances) {
+    # Plot the of hospitalizations per drug
+    hospitalizations_plot <- plot_series(
+        incidents_hospitals[incidents_hospitals$drug == substance, ],
+        "year",
+        "incidents",
+        colors = "#565175",
+        title = " ",
+        y_label = "Hospitalizations",
+        y_top = hospitalizations_y_axis_specs[[substance]]$y_top,
+        y_steps = hospitalizations_y_axis_specs[[substance]]$y_steps,
+        slides = TRUE
+    )
+
+    # Plot the severity of hospitalizations per drug
+    hospitalizations_severity_plot <- plot_series(
+        incidents_hospitals[incidents_hospitals$drug == substance, ],
+        "year",
+        c("Light", "Moderate", "Severe"),
+        colors = c("#565175", "#67b79e", "#ffb727"),
+        title = " ",
+        y_label = "Hospitalizations",
+        y_top = hospitalizations_y_axis_specs[[substance]]$y_top,
+        y_steps = hospitalizations_y_axis_specs[[substance]]$y_steps,
+        legend_position = "top",
+        slides = TRUE
+    )
+
+    # Store the plot
+    hosp_plots_list[[substance]] <- hospitalizations_plot
+    hosp_plots_severity_list[[substance]] <- hospitalizations_severity_plot
+
+    # Save the plots
+    ggsave(
+        file.path(
+            directory_path,
+            paste0(results_location, "hosps_", substance, ".png")
+        ),
+        plot = hospitalizations_plot,
+        width = 12,
+        height = 8,
+        dpi = 150
+    )
+
+    ggsave(
+        file.path(
+            directory_path,
+            paste0(results_location, "hosps_", substance, "_severity.png")
+        ),
+        plot = hospitalizations_severity_plot,
+        width = 12,
+        height = 8,
+        dpi = 150
+    )
+
+}
+
+# --- 8.3. De Telegraaf --------------------------------------------------------
 
 # Plot the relative presence of MDMA and Cocaine in the news
 telegraaf_presence <- plot_series(
@@ -428,7 +530,7 @@ ggsave(
     dpi = 150
 )
 
-# --- 8.3. EUDA data -----------------------------------------------------------
+# --- 8.4. EUDA data -----------------------------------------------------------
 
 # Number of detected NPS by year
 euda_new_substances <- plot_series(
@@ -503,7 +605,7 @@ ggsave(
     dpi = 150
 )
 
-# --- 8.4. Google Trends -------------------------------------------------------
+# --- 8.5. Google Trends -------------------------------------------------------
 
 # Google trends comparison
 google_trends_plot <- plot_series(
@@ -568,4 +670,3 @@ ggsave(
     height = 8,
     dpi = 150
 )
-
