@@ -43,7 +43,8 @@ testing_doses_plots <- function(
         y_top = y_specs_range$y_top,
         y_steps = y_specs_range$y_steps,
         legend_position = "top",
-        slides = slides
+        slides = slides,
+        slides_setts = c(26, 22, 20)
     )
 
     # Set the path to save the results
@@ -61,7 +62,8 @@ testing_doses_plots <- function(
         y_label = "Standard deviation (mg)", # "Volatility (mg)"
         y_top = y_specs_sd$y_top, # y_specs_volatility$y_top,
         y_steps = y_specs_sd$y_steps, #y_specs_volatility$y_steps,
-        slides = slides
+        slides = slides,
+        slides_setts = c(26, 22, 20)
     )
 
     # Set the path to save the results
@@ -90,7 +92,8 @@ testing_doses_plots <- function(
             y_label = "€",
             y_top = y_specs_prices_unit$y_top,
             y_steps = y_specs_prices_unit$y_steps,
-            slides = slides
+            slides = slides,
+            slides_setts = c(26, 22, 20)
         )
 
         # Set the path to save the results
@@ -116,7 +119,8 @@ testing_doses_plots <- function(
             y_label = "€/mg",
             y_top = y_specs_prices_mgs$y_top,
             y_steps = y_specs_prices_mgs$y_steps,
-            slides = slides
+            slides = slides,
+            slides_setts = c(26, 22, 20)
         )
 
         # Set the path to save the results
@@ -129,7 +133,7 @@ testing_doses_plots <- function(
         ggsave(
             file.path(directory_path, results_paths[[figure]]),
             plot = plots[[figure]],
-            width = 12,
+            width = 15,
             height = 8,
             dpi = 150
         )
@@ -150,7 +154,8 @@ plot_series <- function(
     x_steps = 1,
     legend_position = "none",
     years_custom_range = TRUE,
-    slides = FALSE
+    slides = FALSE,
+    slides_setts = c(16, 11, 16)
 ) {
     # Convert data to long format if y_vars has multiple columns
     data_long <- data_long(data, y_vars)
@@ -184,7 +189,7 @@ plot_series <- function(
         geom_point(size = 4) +
         scale_color_manual(values = colors) +
         labs(title = title, x = " ", y = y_label, col = NULL) +
-        dims_theme(legend_position, slides) +
+        dims_theme(legend_position, slides, slides_setts) +
         years_custom +
         scale_y_continuous(
             breaks = seq(y_min, y_top, by = y_steps),
@@ -196,7 +201,7 @@ plot_series <- function(
 }
 
 # Common features for the plots
-dims_theme <- function(legend_position, slides) {
+dims_theme <- function(legend_position, slides, slides_setts) {
 
     if (slides == TRUE) {
         font_plot <- "Palatino"
@@ -213,14 +218,15 @@ dims_theme <- function(legend_position, slides) {
             margin = margin(b = 20)
         ),
         axis.title.x = element_text(
-            size = 14,
+            #size = 14,
+            size = slides_setts[1] * (slides) + 18,
             face = "bold"
         ),
         axis.title.y = element_text(
-            size = 16 * (slides) + 18,
+            size = slides_setts[1] * (slides) + 18,
             margin = margin(r = 20)
         ),
-        axis.text = element_text(size = 11 * (slides) + 16),
+        axis.text = element_text(size = slides_setts[2] * (slides) + 16),
         panel.grid.major = element_line(color = "grey80"),
         panel.grid.minor = element_blank(),
         axis.text.x = element_text(
@@ -229,7 +235,7 @@ dims_theme <- function(legend_position, slides) {
         ),
         legend.position = legend_position,
         text = element_text(size = 16, family = font_plot),
-        legend.text = element_text(size = 16 * (slides) + 16),
+        legend.text = element_text(size = slides_setts[3] * (slides) + 16),
         legend.key.size = unit(1.5, "lines")
     )
 
@@ -245,7 +251,8 @@ bar_chart_plot <- function(
     title,
     y_label,
     y_top,
-    y_steps
+    y_steps,
+    slides_setts = c(25, 25, 12)
 ) {
 
     bar_chart <- data |>
@@ -273,10 +280,10 @@ bar_chart_plot <- function(
                 face = "bold"
             ),
             axis.title.y = element_text(
-                size = 25,
+                size = slides_setts[1],
                 margin = margin(r = 20)
             ),
-            axis.text = element_text(size = 25),
+            axis.text = element_text(size = slides_setts[2]),
             panel.grid.major = element_line(color = "grey80"),
             panel.grid.minor = element_blank(),
             axis.text.x = element_text(
@@ -284,7 +291,7 @@ bar_chart_plot <- function(
                 hjust = 1
             ),
             legend.position = "none",
-            text = element_text(size = 12, family ="Palatino"),
+            text = element_text(size = slides_setts[3], family ="Palatino"),
             legend.text = element_text(size = 12),
             legend.key.size = unit(1.5, "lines")
         ) +

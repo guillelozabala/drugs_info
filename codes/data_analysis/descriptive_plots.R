@@ -57,13 +57,20 @@ telegraaf_news_path <- file.path(
 
 # From EUDA:
 euda_location <- "data/source/euda/"
+
 euda_npss_path <- file.path(
     directory_path,
     paste0(euda_location, "edr2024-nps-table-2_en.csv") #?
 )
+
 euda_mdma_path <- file.path(
     directory_path,
     paste0(euda_location, "GPS-73.xlsx")
+)
+
+euda_mdma_trend_path <- file.path(
+    directory_path,
+    paste0(euda_location, "GPS-272.xlsx")
 )
 
 # From Google Trends:
@@ -113,6 +120,11 @@ telegraaf_yearly_news <- read.csv(telegraaf_news_path)
 # From EUDA:
 euda_npss <- read.csv(euda_npss_path)
 euda_mdma <- readxl::read_excel(euda_mdma_path, skip = 3, n_max = 29)
+euda_mdma_trend <- readxl::read_excel(
+    euda_mdma_trend_path,
+    skip = 3,
+    n_max = 29
+)
 
 # From Google Trends:
 google_trends <- read.csv(google_trends_path, skip = 2)
@@ -236,6 +248,26 @@ euda_mdma$highlight <- ifelse(
     "normal"
 )
 
+# Pick only the data for the Netherlands
+euda_mdma_trend <- euda_mdma_trend[euda_mdma_trend$Country == "Netherlands", ]
+
+# Drop the first two columns
+euda_mdma_trend <- euda_mdma_trend |>
+    dplyr::select(-Country, -`Geographical Area`) |>
+    tidyr::pivot_longer(
+        cols = everything(),
+        names_to = "year",
+        values_to = "rates"
+    )
+
+# Convert years to integer
+euda_mdma_trend$year <- as.integer(euda_mdma_trend$year)
+
+# Filter the data for the years of interest
+euda_mdma_trend_recent <- euda_mdma_trend[
+    (euda_mdma_trend$year >= 2015) & (euda_mdma_trend$year <= 2022),
+]
+
 # ---- 6.5. Google Trends ------------------------------------------------------
 
 # Rename the columns
@@ -293,7 +325,8 @@ for (column in colnames(testservice_total)[2:ncol(testservice_total)]) {
         y_label = "Samples",
         y_top = total_samples_y_axis_specs[[column]]$y_top,
         y_steps = total_samples_y_axis_specs[[column]]$y_steps,
-        slides = TRUE
+        slides = TRUE,
+        slides_setts = c(26, 22, 16)
     )
 
     # Store the plot
@@ -306,7 +339,7 @@ for (column in colnames(testservice_total)[2:ncol(testservice_total)]) {
             paste0(results_location, "total_samples_", column, ".png")
         ),
         plot = samples_plot,
-        width = 12,
+        width = 15,
         height = 8,
         dpi = 150
     )
@@ -320,14 +353,21 @@ cocaine_plot_wline <- samples_plots_list$Cocaine + geom_vline(
     linewidth = 1.5
 )
 
-mdma_plot_wline <- samples_plots_list$MDMA + annotate(
-    "rect",
-    xmin = 2014,
-    xmax = 2016,
-    ymin = 0,
-    ymax = 3600,
-    alpha = .1,
-    fill = "#538a95"
+# mdma_plot_wline <- samples_plots_list$MDMA + annotate(
+#     "rect",
+#     xmin = 2014,
+#     xmax = 2016,
+#     ymin = 0,
+#     ymax = 3600,
+#     alpha = .1,
+#     fill = "#538a95"
+# )
+
+mdma_plot_wline <- samples_plots_list$MDMA + geom_vline(
+    xintercept = 2015,
+    linetype = "dashed",
+    color = "#538a95",
+    linewidth = 1.5
 )
 
 # Other plots: Substances comparison
@@ -348,7 +388,8 @@ compared_samples_plot <- plot_series(
     y_label = "Samples",
     y_top = total_samples_y_axis_specs[["MDMA"]]$y_top,
     y_steps = total_samples_y_axis_specs[["MDMA"]]$y_steps,
-    slides = TRUE
+    slides = TRUE,
+    slides_setts = c(26, 22, 16)
 )
 
 # Other plots: Total number of samples submitted for each NPS
@@ -362,7 +403,8 @@ synt_plot <- plot_series(
     y_top = 440,
     y_steps = 40,
     legend_position = "top",
-    slides = TRUE
+    slides = TRUE,
+    slides_setts = c(26, 22, 16)
 )
 
 # Other plots: Bar chart of the number of samples submitted in 2023
@@ -375,7 +417,8 @@ testservice_total_plot <- bar_chart_plot(
     title,
     y_label = "Number of samples",
     y_top = 3500,
-    y_steps = 500
+    y_steps = 500,
+    slides_setts = c(36, 32, 16)
 )
 
 # Save other plots
@@ -385,7 +428,7 @@ ggsave(
         paste0(results_location, "total_samples_", "cocaine_wline", ".png")
     ),
     plot = cocaine_plot_wline,
-    width = 12,
+    width = 15,
     height = 8,
     dpi = 150
 )
@@ -396,7 +439,7 @@ ggsave(
         paste0(results_location, "total_samples_", "mdma_wline", ".png")
     ),
     plot = mdma_plot_wline,
-    width = 12,
+    width = 15,
     height = 8,
     dpi = 150
 )
@@ -407,7 +450,7 @@ ggsave(
         paste0(results_location, "total_samples_", "comparison", ".png")
     ),
     plot = compared_samples_plot,
-    width = 12,
+    width = 15,
     height = 8,
     dpi = 150
 )
@@ -418,7 +461,7 @@ ggsave(
         paste0(results_location, "total_samples_", "nps_synt", ".png")
     ),
     plot = synt_plot,
-    width = 12,
+    width = 15,
     height = 8,
     dpi = 150
 )
@@ -456,7 +499,8 @@ for (substance in complete_substances) {
         y_label = "Hospitalizations",
         y_top = hospitalizations_y_axis_specs[[substance]]$y_top,
         y_steps = hospitalizations_y_axis_specs[[substance]]$y_steps,
-        slides = TRUE
+        slides = TRUE,
+        slides_setts = c(26, 22, 16)
     )
 
     # Plot the severity of hospitalizations per drug
@@ -470,7 +514,8 @@ for (substance in complete_substances) {
         y_top = hospitalizations_y_axis_specs[[substance]]$y_top,
         y_steps = hospitalizations_y_axis_specs[[substance]]$y_steps,
         legend_position = "top",
-        slides = TRUE
+        slides = TRUE,
+        slides_setts = c(26, 22, 16)
     )
 
     # Store the plot
@@ -484,7 +529,7 @@ for (substance in complete_substances) {
             paste0(results_location, "hosps_", substance, ".png")
         ),
         plot = hospitalizations_plot,
-        width = 12,
+        width = 15,
         height = 8,
         dpi = 150
     )
@@ -495,7 +540,7 @@ for (substance in complete_substances) {
             paste0(results_location, "hosps_", substance, "_severity.png")
         ),
         plot = hospitalizations_severity_plot,
-        width = 12,
+        width = 15,
         height = 8,
         dpi = 150
     )
@@ -515,7 +560,8 @@ telegraaf_presence <- plot_series(
     y_top = 0.0015,
     y_steps = 0.0003,
     legend_position = "top",
-    slides = TRUE
+    slides = TRUE,
+    slides_setts = c(26, 22, 20)
 )
 
 # Save the plot
@@ -525,7 +571,7 @@ ggsave(
         paste0(results_location, "news_presence_yearly.png", sep = "/")
     ),
     plot = telegraaf_presence,
-    width = 12,
+    width = 15,
     height = 8,
     dpi = 150
 )
@@ -542,7 +588,8 @@ euda_new_substances <- plot_series(
     y_label = "Number of NPS",
     y_top = 450,
     y_steps = 50,
-    slides = TRUE
+    slides = TRUE,
+    slides_setts = c(26, 22, 16)
 )
 
 # Number of detected NPS by year, cumulative
@@ -555,7 +602,8 @@ euda_new_substances_cum <- plot_series(
     y_label = "Number of NPS",
     y_top = 4500,
     y_steps = 500,
-    slides = TRUE
+    slides = TRUE,
+    slides_setts = c(26, 22, 16)
 )
 
 # Last year prevalence of ecstasy use, 15-24 years old
@@ -566,9 +614,22 @@ euda_mdma_plot <- bar_chart_plot(
     "highlight",
     colors = c("highlight" = "#538a95", "normal" = "#565175"),
     title,
-    y_label = "Rate (%)",
+    y_label = "Share (%)",
     y_top = 11,
-    y_steps = 1
+    y_steps = 1,
+    slides_setts = c(36, 32, 16)
+)
+
+euda_mdma_trend <- plot_series(
+    euda_mdma_trend_recent,
+    x_var = "year",
+    y_vars = "rates",
+    colors = "#565175",
+    title = " ",
+    y_label = "Last year prevalence (%)",
+    y_top = 10,
+    y_steps = 1,
+    slides = TRUE
 )
 
 # Save the plots
@@ -579,7 +640,7 @@ ggsave(
     ),
     plot = euda_new_substances,
     width = 12,
-    height = 9,
+    height = 9, #
     dpi = 150
 )
 
@@ -590,7 +651,7 @@ ggsave(
     ),
     plot = euda_new_substances_cum,
     width = 12,
-    height = 9,
+    height = 9, #
     dpi = 150
 )
 
@@ -600,6 +661,17 @@ ggsave(
         paste0(results_location, "euda_mdma_rates.png", sep = "/")
     ),
     plot = euda_mdma_plot,
+    width = 15,
+    height = 8,
+    dpi = 150
+)
+
+ggsave(
+    file.path(
+        directory_path,
+        paste0(results_location, "euda_mdma_rates_trend.png", sep = "/")
+    ),
+    plot = euda_mdma_trend,
     width = 15,
     height = 8,
     dpi = 150
@@ -620,7 +692,8 @@ google_trends_plot <- plot_series(
     x_steps = 128,
     slides = TRUE,
     years_custom_range = FALSE,
-    legend_position = "top"
+    legend_position = "top",
+    slides_setts = c(26, 22, 16)
 ) + geom_vline(
     xintercept = as.Date("2016-10-01"),
     linetype = "dashed",
@@ -632,13 +705,14 @@ google_trends_plot_restricted <- plot_series(
     google_trends_restricted,
     "year_month_date",
     c("MDMA", "Cocaine", "Heroin", "Hashish"),
-    colors = c("#565175", "#e4491c", "#ffb727", "#67b79e"),
+    colors = c("#67b79e", "#e4491c", "#ffb727", "#565175"),
     title = " ",
     y_label = "Trend index",
     y_top = 100,
     y_steps = 10,
     x_steps = 128,
     slides = TRUE,
+    slides_setts = c(26, 22, 20),
     years_custom_range = FALSE,
     legend_position = "top"
 ) + geom_vline(
@@ -666,7 +740,7 @@ ggsave(
         paste0(results_location, "google_trends_restricted.png", sep = "/")
     ),
     plot = google_trends_plot_restricted,
-    width = 12,
+    width = 15,
     height = 8,
     dpi = 150
 )
