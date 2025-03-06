@@ -1,3 +1,19 @@
+
+import os
+
+# Check if Conda is installed
+if os.system("conda --version") == 0:
+    # Check if the environment already exists
+    env_name = "drugs_info"  # Replace with your environment name
+    if os.system(f"conda env list | findstr {env_name}") != 0:
+        os.system("conda env create -f environment.yml")
+        print("Conda environment successfully created!")
+    else:
+        print(f"Conda environment '{env_name}' already exists.")
+else:
+    print("Error: Conda is not installed.")
+
+
 import json
 from transformers import AutoImageProcessor, TableTransformerForObjectDetection
 from codes.data_construction.antenne_reports_utils import *

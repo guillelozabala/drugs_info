@@ -59,4 +59,5 @@ renv/lock/
 renv/python/
 renv/sandbox/
 renv/staging/
+renv/.gitignore
 !renv/*.json

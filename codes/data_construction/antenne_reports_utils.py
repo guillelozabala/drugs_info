@@ -17,7 +17,6 @@ from pdf2image import convert_from_path
 
 # Table extraction (tensors)
 from PIL import Image
-import torch
 
 # Read tables and save them as .csv
 import tabula
