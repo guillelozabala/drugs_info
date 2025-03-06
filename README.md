@@ -13,9 +13,6 @@ TBA
 ## Data
 TBA
 
-## Analysis
-TBA
-
 ## Results
 TBA
 

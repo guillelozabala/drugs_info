@@ -1,18 +1,51 @@
+# VSCode settings
 .vscode/
-.lintr
-**/__pycache__/
+
+# Python cache and compiled files
+__pycache__/
 *.pyc
-data/**/**/**/*.png
-data/**/**/**/*.pt
-data/**/**/**/*.csv
-data/**/**/**/*.json
-data/**/**/**/*.pdf
-data/**/**/**/*.gpkg
-data/**/**/**/*.xlsx
-data/**/**/**/*.gz
-data/**/**/**/*.npz
-data/**/**/**/*.pkl
-codes/**/.exe
-codes/**/**/*.ttf
-codes/**/**/*.json
+*.pyo
+*.pyd
+
+# Python virtual environments
+.env/
+.venv/
+
+# R-related ignores
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+.lintr
+
+# Jupyter notebooks auto-saves
+.ipynb_checkpoints/
+
+# Logs and temporary files
+*.log
+*.out
+*.err
+
+# Data files (ignore all but allow a specific folder if needed)
+data/**/*
+
+# Ignore specific data formats
+*.csv
+*.json
+*.pdf
+*.gpkg
+*.xlsx
+*.gz
+*.npz
+*.pkl
+
+# Code outputs and binaries
+codes/**/*.exe
+codes/**/*.ttf
+codes/**/*.json
+
+# Figures and results
 results/figures/**/*.png
+
+# Git attributes file (optional to keep)
+.gitattributes
