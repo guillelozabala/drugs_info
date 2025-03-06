@@ -184,7 +184,9 @@ plot_series <- function(
 
     # Create ggplot line plot
     p <- data_long |>
-        ggplot2::ggplot(aes(x = .data[[x_var]], y = value, color = series)) +
+        ggplot2::ggplot(
+            aes(x = .data[[x_var]], y = value, color = series)
+        ) +
         geom_line(linewidth = 1.1) +
         geom_point(size = 4) +
         scale_color_manual(values = colors) +
@@ -257,7 +259,7 @@ bar_chart_plot <- function(
 
     bar_chart <- data |>
         ggplot(
-            aes(
+            ggplot2::aes(
                 x = reorder(!!rlang::sym(x_var), -!!rlang::sym(y_var)),
                 y = !!rlang::sym(y_var),
                 fill = highlight

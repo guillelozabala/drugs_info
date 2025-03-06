@@ -14,6 +14,7 @@ __pycache__/
 # R-related ignores
 .Rproj.user/
 .Rhistory
+.Rprofile
 .RData
 .Ruserdata
 .lintr
@@ -49,3 +50,13 @@ results/figures/**/*.png
 
 # Git attributes file (optional to keep)
 .gitattributes
+
+# Renv
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/sandbox/
+renv/staging/
+!renv/*.json

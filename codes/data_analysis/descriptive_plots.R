@@ -1,29 +1,5 @@
 
-# 1. Load Libraries and set options --------------------------------------------
-
-library(tidyverse)
-library(jsonlite)
-library(gridExtra)
-library(grid)
-library(lintr)
-library(showtext)
-
-# Set options
-options(max.print = 200)
-
-# 2. Load Functions -----------------------------------------------------------
-
-# Obtain the path of the directory
-current_path <- dirname(rstudioapi::getActiveDocumentContext()$path)
-directory_path <- sub("/codes/data_analysis", "", current_path)
-
-# Define the path to aux functions
-plot_utils_path <- "codes/data_analysis/descriptive_plots_utils.R"
-
-# Load utils
-source(file.path(directory_path, plot_utils_path))
-
-# 3. Define File Paths  --------------------------------------------------------
+# 1. Define File Paths  --------------------------------------------------------
 
 # From the Antenne Reports:
 antenne_location <- "data/processed/antenne_reports/"
@@ -83,27 +59,27 @@ google_trends_path <- file.path(
 # Results directory
 results_location <- "results/figures/descriptives/"
 
-# 4. Load Specifications -------------------------------------------------------
+# 2. Load Specifications -------------------------------------------------------
 
 # Load the y-axis specifications for the doses
-doses_y_axis_specs <- read_json(
-    file.path(current_path, "aux_files/doses_y_axis.json"),
+doses_y_axis_specs <- jsonlite::read_json(
+    file.path(analysis_path, "aux_files/doses_y_axis.json"),
     simplifyVector = TRUE
 )
 
 # Load the y-axis specifications for the total samples
-total_samples_y_axis_specs <- read_json(
-    paste(current_path, "aux_files/total_samples_y_axis.json", sep = "/"),
+total_samples_y_axis_specs <- jsonlite::read_json(
+    paste(analysis_path, "aux_files/total_samples_y_axis.json", sep = "/"),
     simplifyVector = TRUE
 )
 
 # Load the y-axis specifications for hospitalizations
-hospitalizations_y_axis_specs <- read_json(
-    paste(current_path, "aux_files/hospitalizations_y_axis.json", sep = "/"),
+hospitalizations_y_axis_specs <- jsonlite::read_json(
+    paste(analysis_path, "aux_files/hospitalizations_y_axis.json", sep = "/"),
     simplifyVector = TRUE
 )
 
-# 5. Load Data ----------------------------------------------------------------
+# 3. Load Data ----------------------------------------------------------------
 
 # No need to load *testservice_drugs*, since the function *testing_doses_plots*
 # will do it
@@ -130,9 +106,9 @@ euda_mdma_trend <- readxl::read_excel(
 google_trends <- read.csv(google_trends_path, skip = 2)
 
 
-# 6. Data Preprocessing --------------------------------------------------------
+# 4. Data Preprocessing --------------------------------------------------------
 
-# --- 6.1. Antenne reports -----------------------------------------------------
+# --- 4.1. Antenne reports -----------------------------------------------------
 
 # Rename the columns to have more readable legends
 testservice_total <- testservice_total |>
@@ -170,7 +146,7 @@ testservice_total_pivoted_plot <- testservice_total_pivoted |>
     dplyr::filter(year == 2023) |>
     dplyr::filter(drug != "total")
 
-# --- 6.2. National reports ----------------------------------------------------
+# --- 4.2. National reports ----------------------------------------------------
 
 # Filter and rename the columns
 incidents_plots <- incidents |>
@@ -185,7 +161,7 @@ incidents_plots <- incidents |>
 incidents_hospitals <- incidents_plots |>
     dplyr::filter(origin == "SEH-MDI-ziekenhuizen")
 
-# --- 6.3. De Telegraaf --------------------------------------------------------
+# --- 4.3. De Telegraaf --------------------------------------------------------
 
 # Select the words of interest
 keywords <- c("XTC", "MDMA", "ecstasy", "cocaine", "cocaïne")
@@ -224,7 +200,7 @@ telegraaf_yearly_news <- telegraaf_yearly_news |>
         "Cocaine share" = "share_Cocaine"
     )
 
-# --- 6.4. EUDA ----------------------------------------------------------------
+# --- 4.4. EUDA ----------------------------------------------------------------
 
 # Replace NA with zeros and convert all values to integers
 euda_npss[is.na(euda_npss)] <- 0
@@ -268,7 +244,7 @@ euda_mdma_trend_recent <- euda_mdma_trend[
     (euda_mdma_trend$year >= 2015) & (euda_mdma_trend$year <= 2022),
 ]
 
-# ---- 6.5. Google Trends ------------------------------------------------------
+# ---- 4.5. Google Trends ------------------------------------------------------
 
 # Rename the columns
 google_trends <- google_trends |>
@@ -291,21 +267,9 @@ google_trends_restricted <- google_trends |>
         year_month >= "2015-01" & year_month <= "2019-01"
     )
 
-# 7. Load the font -------------------------------------------------------------
+# 5. Plotting ------------------------------------------------------------------
 
-# Enable showtext
-showtext_auto()
-
-# Add Palatino font to showtext
-font_add(
-    family = "Palatino",
-    regular = paste0(current_path, "/aux_files/Palatino Linotype.ttf")
-)
-
-
-# 8. Plotting ------------------------------------------------------------------
-
-# --- 8.1. Antenne reports -----------------------------------------------------
+# --- 5.1. Antenne reports -----------------------------------------------------
 
 # Dose range, volatility and prices plots
 for (file in testservice_drugs_paths) {
@@ -477,7 +441,7 @@ ggsave(
     dpi = 150
 )
 
-# --- 8.2. National reports ----------------------------------------------------
+# --- 5.2. National reports ----------------------------------------------------
 
 # Select the substances to plot
 unique_names <- unique(incidents_hospitals$drug)
@@ -547,7 +511,7 @@ for (substance in complete_substances) {
 
 }
 
-# --- 8.3. De Telegraaf --------------------------------------------------------
+# --- 5.3. De Telegraaf --------------------------------------------------------
 
 # Plot the relative presence of MDMA and Cocaine in the news
 telegraaf_presence <- plot_series(
@@ -576,7 +540,7 @@ ggsave(
     dpi = 150
 )
 
-# --- 8.4. EUDA data -----------------------------------------------------------
+# --- 5.4. EUDA data -----------------------------------------------------------
 
 # Number of detected NPS by year
 euda_new_substances <- plot_series(
@@ -677,7 +641,7 @@ ggsave(
     dpi = 150
 )
 
-# --- 8.5. Google Trends -------------------------------------------------------
+# --- 5.5. Google Trends -------------------------------------------------------
 
 # Google trends comparison
 google_trends_plot <- plot_series(
