@@ -1,11 +1,17 @@
-from codes.data_construction.antenne_reports_cleaning_utils import *
+from data_construction.antenne_reports_cleaning_utils import (
+    clean_total_reports_data,
+    clean_dosering_data,
+    clean_purity_data,
+    get_paths
+)
 
-path_2023 = r'./data/intermediate/antenne_reports_raw_csvs/antenne_amsterdam_2023/'
+paths = get_paths()
+path_2023 = paths["antenne"]["csv"] + 'antenne_amsterdam_2023/'
 
 # TOTAL SAMPLES DATA
 
 # Rows with missing data
-faulty_rows = [0, 4, 16, 28] 
+faulty_rows = [0, 4, 16, 28]
 
 # Coordinates of faulty cells and their correct values
 changes = [
@@ -35,8 +41,14 @@ COLUMN_MAP_TOTAL_SAMPLES = {
     'Unnamed: 11': 'total'
     }
 
-clean_total_reports_data('225_0.csv',path_2023,COLUMN_MAP_TOTAL_SAMPLES,faulty_rows,changes,units)
-
+clean_total_reports_data(
+    '225_0.csv',
+    path_2023,
+    COLUMN_MAP_TOTAL_SAMPLES,
+    faulty_rows,
+    changes,
+    units
+)
 
 # DOSES DATA
 
@@ -53,29 +65,55 @@ COLUMN_MAP_DOSES = {
 SUBSTANCE_SETTINGS_DOSES = {
     'mdma': {
         'adjustments': [
-            {'column': COLUMN_MAP_DOSES['year'], 'function': lambda x: x + 2000 if x < 50 else x + 1000},
-            {'column': COLUMN_MAP_DOSES['n_samples'], 'function': lambda x: x * 1000 if x < 10 else x},
-            {'column': COLUMN_MAP_DOSES['n_prices_default'], 'function': lambda x: x * 1000 if x < 10 else x},
+            {
+                'column': COLUMN_MAP_DOSES['year'],
+                'function': lambda x: x + 2000 if x < 50 else x + 1000
+            },
+            {
+                'column': COLUMN_MAP_DOSES['n_samples'],
+                'function': lambda x: x * 1000 if x < 10 else x
+            },
+            {
+                'column': COLUMN_MAP_DOSES['n_prices_default'],
+                'function': lambda x: x * 1000 if x < 10 else x
+            },
         ]
     },
     'cocaine': {
-        'adjustments': [{'column': COLUMN_MAP_DOSES['year'], 'function': lambda x: x + 2000}]
+        'adjustments': [
+            {
+                'column': COLUMN_MAP_DOSES['year'],
+                'function': lambda x: x + 2000
+            }
+        ]
     },
     'twocb': {
         'adjustments': [
-            {'column': 'Unnamed: 5', 'function': lambda x, i: x + ['2', '3', '2', '4', '4', '2', '3', '3', '6', '7', '0', '7'][i], 'index': True},
+            {
+                'column': 'Unnamed: 5',
+                'function': lambda x, i: x + ['2', '3', '2', '4', '4', '2', '3', '3', '6', '7', '0', '7'][i],
+                'index': True
+            },
         ],
         'drop_columns': ['Unnamed: 3'],
         'price_column': 'Unnamed: 5',
         'n_price_column': 'Unnamed: 4',
     },
     'ghb': {
-        'split_columns': {'Unnamed: 2': ['dose_min', 'dose_max'], 'doserin': ['dose_mean', 'dose_sd']},
+        'split_columns': {
+            'Unnamed: 2': ['dose_min', 'dose_max'],
+            'doserin': ['dose_mean', 'dose_sd']
+        },
         'drop_columns': ['Unnamed: 2', 'doserin'],
         'price_column': None,
     },
     'lsd': {
-        'adjustments': [{'column': COLUMN_MAP_DOSES['year'], 'function': lambda x: x + 2000}],
+        'adjustments': [
+            {
+                'column': COLUMN_MAP_DOSES['year'],
+                'function': lambda x: x + 2000
+            }
+        ],
         'price_column': 'prijs',
     },
 }
@@ -92,23 +130,28 @@ substances_doses = [
 
 # Process each substance
 for substance, file_name in substances_doses:
-    clean_dosering_data(substance, file_name, path_2023, SUBSTANCE_SETTINGS_DOSES, COLUMN_MAP_DOSES)
+    clean_dosering_data(
+        substance, file_name,
+        path_2023,
+        SUBSTANCE_SETTINGS_DOSES,
+        COLUMN_MAP_DOSES
+    )
 
 # PURITY DATA
 
 substances_purity = [
-    ('mdma', '227_0.csv'), # missing last row
+    ('mdma', '227_0.csv'),  # missing last row
     ('cocaine', '228_0.csv'),
     ('amphetamine', '229_1.csv'),
-    ('ketamine', '230_1.csv'), #year
+    ('ketamine', '230_1.csv'),  # year
     ('twocb', '231_0.csv'),
-    ('lsd', '232_1.csv'), # year
+    ('lsd', '232_1.csv'),  # year
     ('ghb', '233_1.csv')
 ]
 
 COLUMN_MAP_PURITY = {
-    'Unnamed: 0':'year',
-    'geen':'no_analysis',
+    'Unnamed: 0': 'year',
+    'geen': 'no_analysis',
 }
 
 TRANSLATIONS = {
@@ -120,5 +163,10 @@ TRANSLATIONS = {
 
 # Process each substance
 for substance, file_name in substances_purity:
-    clean_purity_data(substance, file_name, path_2023, COLUMN_MAP_PURITY, TRANSLATIONS)
-
+    clean_purity_data(
+        substance,
+        file_name,
+        path_2023,
+        COLUMN_MAP_PURITY,
+        TRANSLATIONS
+    )

@@ -1,4 +1,3 @@
-
 # 1. Load Libraries and set options --------------------------------------------
 
 renv::activate()
@@ -16,9 +15,10 @@ options(max.print = 200)
 
 # 2. Load Functions -----------------------------------------------------------
 
-# Obtain the path of the directory
-directory_path <- dirname(rstudioapi::getActiveDocumentContext()$path)
-analysis_path <- file.path(directory_path, "/codes/data_analysis")
+# Obtain the paths
+file_location <- dirname(rstudioapi::getActiveDocumentContext()$path)
+analysis_path <- file.path(file_location, "/codes/data_analysis")
+directory_path <- sub("/codes", "", file_location)
 
 # 3. Load the font -------------------------------------------------------------
 
