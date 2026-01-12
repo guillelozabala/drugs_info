@@ -2,28 +2,43 @@ import pandas as pd
 import re
 import os
 
+
 def clean_dataframe(df, year, substance, column_mappings):
+    '''Cleans the dataframes obtained from the national reports'''
 
     # Preprocess
     df = df.transpose()
     df.columns = df.iloc[0]
-    df = df[1:].dropna(axis=1, how='all') 
+    df = df[1:].dropna(axis=1, how='all')
 
     # Remove unwanted characters from observations
     unwanted_characters = ['%', ' jaar']
     for char in unwanted_characters:
-        df = df.map(lambda x: re.sub(char, '', str(x)) if isinstance(x, str) else x)
-    
+        df = df.map(
+            lambda x: re.sub(char, '', str(x))
+            if isinstance(x, str)
+            else x
+        )
+
     # Remove spaces between integers
-    df = df.map(lambda x: re.sub(r'(\d)\s+(\d)', r'\1\2', str(x)) if isinstance(x, str) else x)
+    df = df.map(
+        lambda x: re.sub(r'(\d)\s+(\d)', r'\1\2', str(x))
+        if isinstance(x, str)
+        else x
+        )
+
     # Remove other strings
-    df = df.map(lambda x: re.search(r'\d+(\.\d+)?', str(x)).group() if re.search(r'\d+(\.\d+)?', str(x)) else x)
+    df = df.map(
+        lambda x: re.search(r'\d+(\.\d+)?', str(x)).group()
+        if re.search(r'\d+(\.\d+)?', str(x))
+        else x
+        )
 
     # Year-specific processings
     if year == '2011':
         df = df.loc[:, ~df.columns.astype(str).str.contains('lcohol')]
 
-    if year in {'2014','2015','2016', '2019'}:
+    if year in {'2014', '2015', '2016', '2019'}:
         df.columns = [f"Unnamed_{i}" if pd.isna(col) else col for i, col in enumerate(df.columns)]
 
     if year in {'2015', '2016', '2017', '2018', '2019'}:
@@ -47,7 +62,9 @@ def clean_dataframe(df, year, substance, column_mappings):
 
     # Apply column renaming (if exists)
     column_positions = column_mappings.get(year, {})
-    df = df.rename(columns={df.columns[int(i)]: name for i, name in column_positions.items() if int(i) < len(df.columns)})
+    df = df.rename(
+        columns={df.columns[int(i)]: name for i, name in column_positions.items() if int(i) < len(df.columns)}
+        )
 
     # Handle index-related operations
     df['year'] = year if year != '2010' else df.index
@@ -58,29 +75,36 @@ def clean_dataframe(df, year, substance, column_mappings):
 
     return df.reset_index(drop=True)
 
+
 def national_reports_cleaning(incidents_dict, source_path, column_mappings):
 
     dfs = []
     for year, substances in incidents_dict.items():
         index_year = str(int(year) + 1) if int(year) > 2013 else year
         dfs_year = [
-            clean_dataframe(pd.read_csv(f"{source_path}{index_year}/{file}"), year, substance, column_mappings)
+            clean_dataframe(
+                pd.read_csv(f"{source_path}{index_year}/{file}"),
+                year,
+                substance,
+                column_mappings
+                )
             for substance, file in substances.items() if substance != 'Ketamine'
         ]
         dfs.append(pd.concat(dfs_year, ignore_index=True))
 
     # print('yeah 9')
     joint_df = pd.concat(dfs, ignore_index=True)
-    
+
     # In another function, we will handle the wrong values
     if len(joint_df) >= 58:
         joint_df.loc[57, 'median_age'] = 22
-    
+
     if '2013' in joint_df['year'].values:
         joint_df.loc[(joint_df['drug'] == 'Opioids') & (joint_df['year'] == '2013'), 'below_25_pcnt'] = 100 - joint_df.loc[(joint_df['drug'] == 'Opioids') & (joint_df['year'] == '2013'), 'below_25_pcnt'].fillna(0).astype(int)
         joint_df.loc[(joint_df['drug'] == 'Opioids') & (joint_df['year'] == '2013') & (joint_df['below_25_pcnt'] == 100), 'below_25_pcnt'] = float('NaN')
 
     return joint_df
+
 
 def load_and_append_csvs(folder_path):
     all_dfs = []
@@ -89,6 +113,7 @@ def load_and_append_csvs(folder_path):
             df = pd.read_csv(os.path.join(folder_path, file_name), dtype=str)
             all_dfs.append(df)
     return pd.concat(all_dfs, ignore_index=True)
+
 
 def yearly_incidents(df, dict):
 
@@ -116,6 +141,7 @@ def yearly_incidents(df, dict):
         new_rows.append(new_row)
     df = pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)
 
+    
     # Compute differences per group
     df = df.sort_values(by=['drug', 'origin', 'year'])
     grouped = df.groupby(['drug', 'origin'])
@@ -129,7 +155,7 @@ def yearly_incidents(df, dict):
 
     # Use mask() to conditionally replace values
     mask = df["year"] >= 2018
-    df['incidents'] = df['incidents_diff'].mask(mask, df['incidents'])
+    df.loc[:,'incidents_diff'] = df['incidents'].mask(mask, df['incidents'])
 
     for severity in ['light', 'moderate', 'severe']:
         df.loc[:, f'{severity}_incidents'] = (
@@ -137,12 +163,14 @@ def yearly_incidents(df, dict):
         )
 
     # Drop the '_diffs' columns
-    df = df.drop(columns=[col for col in df.columns if col.endswith('_diff')])
+    # df = df.loc[df['year'] > 2011].copy()
+    # df.loc[:,'incidents'] = df.loc[:,'incidents_diff']
+    # df = df.drop(columns=[col for col in df.columns if col.endswith('_diff')])
 
     # Drop the intensity percentage columns 
     df = df.drop(columns=[col for col in df.columns if col.startswith('DOG_')])
 
     # Drop irrelevant columns
-    df = df.drop('hospital_admission_pcnt', axis=1)
+    # df = df.drop('hospital_admission_pcnt', axis=1)
 
     return df

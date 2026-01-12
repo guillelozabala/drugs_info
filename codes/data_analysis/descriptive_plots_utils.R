@@ -1,12 +1,9 @@
-
 # Plot results of the doses (range, volatility and prices)
 testing_doses_plots <- function(
     file,
     y_axis_values,
     directory_path,
-    slides = FALSE
-) {
-
+    slides = FALSE) {
     # Read the data
     df <- read.csv(file)
 
@@ -51,17 +48,17 @@ testing_doses_plots <- function(
     results_paths[[1]] <- paste0(save_path, "range_doses_", substance, ".png")
 
     # Extract the y-axis specifications
-    y_specs_sd <-  y_axis_values[["doses_sd"]][[substance]]
+    y_specs_sd <- y_axis_values[["doses_sd"]][[substance]]
 
     # Plot the volatility of the doses
     plots[[2]] <- plot_series(
         df_plots,
-        y_vars = "dose_sd", # "adj_volatility" 
+        y_vars = "dose_sd", # "adj_volatility"
         colors = "#538a95",
         title = " ",
         y_label = "Standard deviation (mg)", # "Volatility (mg)"
         y_top = y_specs_sd$y_top, # y_specs_volatility$y_top,
-        y_steps = y_specs_sd$y_steps, #y_specs_volatility$y_steps,
+        y_steps = y_specs_sd$y_steps, # y_specs_volatility$y_steps,
         slides = slides,
         slides_setts = c(26, 22, 20)
     )
@@ -73,7 +70,6 @@ testing_doses_plots <- function(
     price_tags <- c("price_per_gram", "price_per_pill", "price_per_tab")
 
     if (any(price_tags %in% colnames(df_plots))) {
-
         # Extract the price tag
         price_tag <- price_tags[price_tags %in% colnames(df_plots)]
 
@@ -98,12 +94,10 @@ testing_doses_plots <- function(
 
         # Set the path to save the results
         results_paths[[3]] <- paste0(save_path, "unit_p_", substance, ".png")
-
     }
 
     # Check if the data contains price per milligram information
     if ("price_per_mg" %in% colnames(df_plots)) {
-
         # Extract the y-axis specifications
         y_specs_prices_mgs <- y_axis_values[["doses_prices_mgs"]][[substance]]
 
@@ -125,7 +119,6 @@ testing_doses_plots <- function(
 
         # Set the path to save the results
         results_paths[[4]] <- paste0(save_path, "mg_p_", substance, ".png")
-
     }
 
     # Save the plots
@@ -155,21 +148,18 @@ plot_series <- function(
     legend_position = "none",
     years_custom_range = TRUE,
     slides = FALSE,
-    slides_setts = c(16, 11, 16)
-) {
+    slides_setts = c(16, 11, 16)) {
     # Convert data to long format if y_vars has multiple columns
     data_long <- data_long(data, y_vars)
 
     # Set colors if not provided
     if (is.null(colors)) {
-        colors <- scales::hue_pal()(length(y_vars))  # Default color palette
+        colors <- scales::hue_pal()(length(y_vars)) # Default color palette
     }
 
     # Obtain the range of x values
     years <- x_axis_custom_range(data, x_var)
-
     if (years_custom_range) {
-        # Obtain the range of x values
         years_custom <- scale_x_continuous(
             breaks = seq(years[1], years[2], by = x_steps),
             limits = c(years[1], years[2]),
@@ -178,9 +168,6 @@ plot_series <- function(
     } else {
         years_custom <- NULL
     }
-
-    # Obtain the range of x values
-    years <- x_axis_custom_range(data, x_var)
 
     # Create ggplot line plot
     p <- data_long |>
@@ -204,7 +191,6 @@ plot_series <- function(
 
 # Common features for the plots
 dims_theme <- function(legend_position, slides, slides_setts) {
-
     if (slides == TRUE) {
         font_plot <- "Palatino"
     } else {
@@ -212,35 +198,34 @@ dims_theme <- function(legend_position, slides, slides_setts) {
     }
 
     theme_minimal() +
-    theme(
-        plot.title = element_text(
-            hjust = 0.5,
-            size = 18,
-            face = "bold",
-            margin = margin(b = 20)
-        ),
-        axis.title.x = element_text(
-            #size = 14,
-            size = slides_setts[1] * (slides) + 18,
-            face = "bold"
-        ),
-        axis.title.y = element_text(
-            size = slides_setts[1] * (slides) + 18,
-            margin = margin(r = 20)
-        ),
-        axis.text = element_text(size = slides_setts[2] * (slides) + 16),
-        panel.grid.major = element_line(color = "grey80"),
-        panel.grid.minor = element_blank(),
-        axis.text.x = element_text(
-            angle = 45,
-            hjust = 1
-        ),
-        legend.position = legend_position,
-        text = element_text(size = 16, family = font_plot),
-        legend.text = element_text(size = slides_setts[3] * (slides) + 16),
-        legend.key.size = unit(1.5, "lines")
-    )
-
+        theme(
+            plot.title = element_text(
+                hjust = 0.5,
+                size = 18,
+                face = "bold",
+                margin = margin(b = 20)
+            ),
+            axis.title.x = element_text(
+                # size = 14,
+                size = slides_setts[1] * (slides) + 18,
+                face = "bold"
+            ),
+            axis.title.y = element_text(
+                size = slides_setts[1] * (slides) + 18,
+                margin = margin(r = 20)
+            ),
+            axis.text = element_text(size = slides_setts[2] * (slides) + 16),
+            panel.grid.major = element_line(color = "grey80"),
+            panel.grid.minor = element_blank(),
+            axis.text.x = element_text(
+                angle = 45,
+                hjust = 1
+            ),
+            legend.position = legend_position,
+            text = element_text(size = 16, family = font_plot),
+            legend.text = element_text(size = slides_setts[3] * (slides) + 16),
+            legend.key.size = unit(1.5, "lines")
+        )
 }
 
 # Obtain bar charts
@@ -254,9 +239,7 @@ bar_chart_plot <- function(
     y_label,
     y_top,
     y_steps,
-    slides_setts = c(25, 25, 12)
-) {
-
+    slides_setts = c(25, 25, 12)) {
     bar_chart <- data |>
         ggplot(
             ggplot2::aes(
@@ -293,7 +276,7 @@ bar_chart_plot <- function(
                 hjust = 1
             ),
             legend.position = "none",
-            text = element_text(size = slides_setts[3], family ="Palatino"),
+            text = element_text(size = slides_setts[3], family = "Palatino"),
             legend.text = element_text(size = 12),
             legend.key.size = unit(1.5, "lines")
         ) +
@@ -313,7 +296,6 @@ bar_chart_plot <- function(
 
 # Convert data to long format
 data_long <- function(data, y_vars) {
-
     data_long <- data |>
         tidyr::pivot_longer(
             cols = dplyr::all_of(y_vars),
@@ -326,8 +308,9 @@ data_long <- function(data, y_vars) {
 
 # Obtain the range of x values
 x_axis_custom_range <- function(data, x_var) {
-
-    years <- data[[x_var]] |> unique() |> sort()
+    years <- data[[x_var]] |>
+        unique() |>
+        sort()
     x_init <- years[1]
     x_end <- years[length(years)]
 

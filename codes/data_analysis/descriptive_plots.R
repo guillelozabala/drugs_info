@@ -36,8 +36,8 @@ euda_location <- "data/source/euda/"
 
 euda_npss_path <- file.path(
     directory_path,
-    paste0(euda_location, "edr2024-nps-table-2_en.csv") #?
-)
+    paste0(euda_location, "edr2025-nps-table2025_en.csv")
+) # "edr2024-nps-table-2_en.csv") #?
 
 euda_mdma_path <- file.path(
     directory_path,
@@ -564,7 +564,7 @@ euda_new_substances_cum <- plot_series(
     colors = "#565175",
     title = " ",
     y_label = "Number of NPS",
-    y_top = 4500,
+    y_top = 5000,
     y_steps = 500,
     slides = TRUE,
     slides_setts = c(26, 22, 16)

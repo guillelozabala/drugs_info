@@ -4,8 +4,10 @@ from datetime import datetime, timedelta
 import pandas as pd
 import json
 
-# Define a function to scrape a webpage for specific keywords
+
 def scrape_for_keywords(url, keywords):
+    '''Define a function to scrape a webpage for specific keywords'''
+
     try:
         # Fetch the content of the webpage
         response = requests.get(url)
@@ -14,51 +16,76 @@ def scrape_for_keywords(url, keywords):
 
         # Parse the HTML
         soup = BeautifulSoup(page_content, 'html.parser')
-        
+
         # Convert HTML to plain text and search for keywords
         page_text = soup.get_text().lower()
-        
+
         # Search for keywords
         found_keywords = {keyword: page_text.count(keyword.lower()) for keyword in keywords}
-        
-        # Find all links within the container with the specific class, if it exists
+
+        # Find all links within the container with the specific class
         n_links = len(soup.select('.Archive__list a'))
-            
+
         return [found_keywords, n_links]
 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
         return None
 
+
 # Load the keywords
-with open(r'./codes/data_construction/aux_files/telegraaf_keywords.json', 'r') as f:
+keywords_path = r'./codes/data_construction/aux_files/telegraaf_keywords.json'
+with open(keywords_path, 'r') as f:
     keywords = json.load(f)
 
+# Common link
+url_base = "https://www.telegraaf.nl/archief/"
+
 # Define the start and end dates
-start_date, end_date, delta = datetime(2009, 1, 1), datetime(2023, 12, 31), timedelta(days=1)
+start_date, end_date = datetime(2009, 1, 1), datetime(2023, 12, 31)
+delta = timedelta(days=1)
 
 # Create an empty list to store the matches
 matches = []
 
 # Loop over the dates and scrape the webpage for the keywords
 current_date = start_date
+
 while current_date <= end_date:
-    url = f"https://www.telegraaf.nl/archief/{current_date.year}/{current_date.month:02d}/{current_date.day:02d}"
+    # Extract the current year, month, and day
+    c_year = current_date.year
+    c_month = current_date.month
+    c_day = current_date.day
+
+    # Construct the URL for the current date
+    url = url_base + f"/{c_year}/{c_month:02d}/{c_day:02d}"
+
+    # Scrape the webpage for the keywords
     results = scrape_for_keywords(url, keywords)
-    results_keywords = results[0]
-    for keyword, count in results_keywords.items():
+
+    # Check if results are not None
+    if results:
+        results_keywords = results[0]
         results_links = results[1]
-        matches.append({
-            'date': current_date,
-            'n_links': results_links,
-            'keyword': keyword,
-            'count': count,
-            'url': url
-        })
+
+        # Append the results to the matches list
+        for keyword, count in results_keywords.items():
+            matches.append({
+                'date': current_date,
+                'n_links': results_links,
+                'keyword': keyword,
+                'count': count,
+                'url': url
+            })
+
+    # Move to the next day
     current_date += delta
 
+# Alerts results path
+results_path = r'./data/processed/red_alerts_news/'
+
 # Save the matches to a JSON file
-with open(r'./data/processed/red_alerts_news/telegraaf_matches.json', 'w') as f:
+with open(results_path + 'telegraaf_matches.json', 'w') as f:
     json.dump(matches, f, default=str)
 
 # Convert matches to a DataFrame
@@ -75,7 +102,10 @@ monthly_aggregated_df = matches_df.groupby(['year_month', 'keyword']).agg({
 }).reset_index()
 
 # Save the aggregated data to a CSV file
-monthly_aggregated_df.to_csv(r'./data/processed/red_alerts_news/telegraaf_monthly_aggregated.csv', index=False)
+monthly_aggregated_df.to_csv(
+    results_path + 'telegraaf_monthly_aggregated.csv',
+    index=False
+)
 
 # Aggregate the observations at the year level for each keyword
 matches_df['year'] = matches_df['date'].dt.year
@@ -85,4 +115,7 @@ yearly_aggregated_df = matches_df.groupby(['year', 'keyword']).agg({
 }).reset_index()
 
 # Save the aggregated data to a CSV file
-yearly_aggregated_df.to_csv(r'./data/processed/red_alerts_news/telegraaf_yearly_aggregated.csv', index=False)
+yearly_aggregated_df.to_csv(
+    results_path + 'telegraaf_yearly_aggregated.csv',
+    index=False
+)
