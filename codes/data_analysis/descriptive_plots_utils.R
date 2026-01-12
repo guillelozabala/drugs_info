@@ -148,7 +148,8 @@ plot_series <- function(
     legend_position = "none",
     years_custom_range = TRUE,
     slides = FALSE,
-    slides_setts = c(16, 11, 16)) {
+    slides_setts = c(16, 11, 16),
+    point_size = 4) {
     # Convert data to long format if y_vars has multiple columns
     data_long <- data_long(data, y_vars)
 
@@ -175,7 +176,7 @@ plot_series <- function(
             aes(x = .data[[x_var]], y = value, color = series)
         ) +
         geom_line(linewidth = 1.1) +
-        geom_point(size = 4) +
+        geom_point(size = point_size) +
         scale_color_manual(values = colors) +
         labs(title = title, x = " ", y = y_label, col = NULL) +
         dims_theme(legend_position, slides, slides_setts) +
