@@ -18,7 +18,7 @@ test_fac = gpd.GeoDataFrame(
 
 fig, ax = plt.subplots()
 netherlands_nowater.plot(ax=ax, color='#538a95', edgecolor='white', linewidth=0.15)
-test_fac.plot(ax=ax, color='#565175', markersize=15)
+test_fac.plot(ax=ax, color='#565175', markersize=20)
 
 plt.axis('off')
 plt.savefig(r'./results/figures/descriptives/drug_testing_facilities_map.png', dpi=600, bbox_inches='tight')
